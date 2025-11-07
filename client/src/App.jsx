@@ -12,8 +12,10 @@ import Properties from './pages/Properties';
 import PropertyDetails from './pages/PropertyDetails';
 import PropertyForm from './pages/PropertyForm';
 import Payments from './pages/Payments';
+import PaymentForm from './pages/PaymentForm';
 import Maintenance from './pages/Maintenance';
 import MaintenanceDetails from './pages/MaintenanceDetails';
+import MaintenanceForm from './pages/MaintenanceForm';
 import Messages from './pages/Messages';
 import Leases from './pages/Leases';
 import LeaseDetails from './pages/LeaseDetails';
@@ -48,8 +50,12 @@ function App() {
           <Route path="/properties/:id" element={<PrivateRoute><PropertyDetails /></PrivateRoute>} />
           <Route path="/properties/:id/edit" element={<PrivateRoute><PropertyForm /></PrivateRoute>} />
           <Route path="/payments" element={<PrivateRoute><Payments /></PrivateRoute>} />
+          <Route path="/payments/new" element={<PrivateRoute><PaymentForm /></PrivateRoute>} />
+          <Route path="/payments/:id/edit" element={<PrivateRoute><PaymentForm /></PrivateRoute>} />
           <Route path="/maintenance" element={<PrivateRoute><Maintenance /></PrivateRoute>} />
+          <Route path="/maintenance/new" element={<PrivateRoute><MaintenanceForm /></PrivateRoute>} />
           <Route path="/maintenance/:id" element={<PrivateRoute><MaintenanceDetails /></PrivateRoute>} />
+          <Route path="/maintenance/:id/edit" element={<PrivateRoute><MaintenanceForm /></PrivateRoute>} />
           <Route path="/leases" element={<PrivateRoute><Leases /></PrivateRoute>} />
           <Route path="/leases/:id" element={<PrivateRoute><LeaseDetails /></PrivateRoute>} />
           <Route path="/messages" element={<PrivateRoute><Messages /></PrivateRoute>} />

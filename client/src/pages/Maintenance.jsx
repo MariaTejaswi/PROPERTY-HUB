@@ -10,7 +10,7 @@ import { formatDate } from '../utils/formatters';
 import styles from './Maintenance.module.css';
 
 const Maintenance = () => {
-  const { isLandlord, isTenant } = useAuth();
+  const { user, isLandlord, isTenant } = useAuth();
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +42,20 @@ const Maintenance = () => {
     } catch (error) {
       console.error('Error updating status:', error);
       setError('Failed to update status');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this maintenance request?')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/maintenance/${id}`);
+      fetchRequests();
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      setError('Failed to delete request');
     }
   };
 
@@ -222,6 +236,25 @@ const Maintenance = () => {
                 >
                   View Details
                 </Button>
+                
+                {isTenant && request.tenant?._id === user._id && request.status === 'pending' && (
+                  <>
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={() => navigate(`/maintenance/${request._id}/edit`)}
+                    >
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="danger" 
+                      size="sm"
+                      onClick={() => handleDelete(request._id)}
+                    >
+                      Delete
+                    </Button>
+                  </>
+                )}
                 
                 {isLandlord && request.status !== 'completed' && (
                   <>

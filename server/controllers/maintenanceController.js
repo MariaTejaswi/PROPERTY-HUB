@@ -134,10 +134,7 @@ exports.createMaintenanceRequest = async (req, res) => {
     sendMaintenanceNotification(request, property.landlord, req.user, property)
       .catch(err => console.error('Maintenance notification error:', err));
     
-    res.status(201).json({
-      success: true,
-      request
-    });
+    res.status(201).json(request);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -191,10 +188,7 @@ exports.updateMaintenanceRequest = async (req, res) => {
       { new: true, runValidators: true }
     ).populate('property tenant landlord assignedTo', 'name email');
     
-    res.json({
-      success: true,
-      request
-    });
+    res.json(request);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

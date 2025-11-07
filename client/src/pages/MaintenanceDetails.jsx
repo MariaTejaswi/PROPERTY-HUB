@@ -64,6 +64,19 @@ const MaintenanceDetails = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this maintenance request? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/maintenance/${id}`);
+      navigate('/maintenance');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete request');
+    }
+  };
+
   if (loading) return <Loader fullScreen />;
 
   if (error && !request) {
@@ -112,26 +125,44 @@ const MaintenanceDetails = () => {
         <Button variant="secondary" onClick={() => navigate('/maintenance')}>
           ← Back to Maintenance
         </Button>
-        {isLandlord && request.status !== 'completed' && request.status !== 'cancelled' && (
-          <div className={styles.actions}>
-            {request.status === 'pending' && (
-              <Button onClick={() => handleStatusChange('in_progress')}>
-                Start Work
+        <div className={styles.actions}>
+          {isLandlord && request.status !== 'completed' && request.status !== 'cancelled' && (
+            <>
+              {request.status === 'pending' && (
+                <Button onClick={() => handleStatusChange('in_progress')}>
+                  Start Work
+                </Button>
+              )}
+              {request.status === 'in_progress' && (
+                <Button onClick={() => handleStatusChange('completed')}>
+                  Mark Complete
+                </Button>
+              )}
+              <Button 
+                variant="danger" 
+                onClick={() => handleStatusChange('cancelled')}
+              >
+                Cancel Request
               </Button>
-            )}
-            {request.status === 'in_progress' && (
-              <Button onClick={() => handleStatusChange('completed')}>
-                Mark Complete
+            </>
+          )}
+          {request.tenant?._id === user._id && request.status === 'pending' && (
+            <>
+              <Button 
+                variant="secondary" 
+                onClick={() => navigate(`/maintenance/${id}/edit`)}
+              >
+                Edit Request
               </Button>
-            )}
-            <Button 
-              variant="danger" 
-              onClick={() => handleStatusChange('cancelled')}
-            >
-              Cancel
-            </Button>
-          </div>
-        )}
+              <Button 
+                variant="danger" 
+                onClick={handleDelete}
+              >
+                Delete
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className={styles.content}>

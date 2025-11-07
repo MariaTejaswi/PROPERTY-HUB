@@ -115,10 +115,7 @@ exports.createPayment = async (req, res) => {
     
     await payment.populate('property tenant landlord', 'name email');
     
-    res.status(201).json({
-      success: true,
-      payment
-    });
+    res.status(201).json(payment);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -240,10 +237,7 @@ exports.updatePayment = async (req, res) => {
       { new: true, runValidators: true }
     ).populate('property tenant landlord', 'name email');
     
-    res.json({
-      success: true,
-      payment
-    });
+    res.json(payment);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import Card from '../components/common/Card';
@@ -10,8 +11,8 @@ import { formatCurrency, formatDate } from '../utils/formatters';
 import styles from './Payments.module.css';
 
 const Payments = () => {
-  const { isLandlord, isTenant } = useAuth();
-  const [payments, setPayments] = useState([]);
+  const { user, isLandlord, isTenant } = useAuth();
+  const navigate = useNavigate();  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -46,6 +47,21 @@ const Payments = () => {
     setError(errorMsg);
   };
 
+  const handleDelete = async (paymentId) => {
+    if (!window.confirm('Are you sure you want to delete this payment record? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/payments/${paymentId}`);
+      setSuccess('Payment record deleted successfully');
+      fetchPayments();
+    } catch (error) {
+      console.error('Error deleting payment:', error);
+      setError(error.response?.data?.message || 'Failed to delete payment');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'paid':
@@ -78,6 +94,11 @@ const Payments = () => {
             {isLandlord ? 'Track rent payments' : 'Manage your payments'}
           </p>
         </div>
+        {isLandlord && (
+          <Button onClick={() => navigate('/payments/new')}>
+            + Create Payment
+          </Button>
+        )}
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -169,6 +190,25 @@ const Payments = () => {
                     fullWidth
                   >
                     Pay Now
+                  </Button>
+                </div>
+              )}
+
+              {isLandlord && payment.status === 'pending' && (
+                <div className={styles.actions}>
+                  <Button 
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => navigate(`/payments/${payment._id}/edit`)}
+                  >
+                    Edit
+                  </Button>
+                  <Button 
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleDelete(payment._id)}
+                  >
+                    Delete
                   </Button>
                 </div>
               )}
