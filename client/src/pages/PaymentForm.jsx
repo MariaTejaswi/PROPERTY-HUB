@@ -60,14 +60,24 @@ const PaymentForm = () => {
   const fetchProperties = async () => {
     try {
       const response = await api.get('/properties');
+      console.log('Properties API response:', response.data);
+      // Backend returns { properties: [...] }
+      const propertyList = response.data.properties || response.data;
+      console.log('Property list:', propertyList);
+      console.log('Current user:', user);
       // Filter properties owned by landlord
-      const landlordProperties = response.data.filter(
-        prop => prop.landlord?._id === user._id || prop.landlord === user._id
+      const landlordProperties = propertyList.filter(
+        prop => prop.landlord?._id === user._id || prop.landlord === user._id || prop.landlord?._id === user.id || prop.landlord === user.id
       );
+      console.log('Landlord properties:', landlordProperties);
       setProperties(landlordProperties);
+      
+      if (landlordProperties.length === 0) {
+        setError('No properties found. Please create a property first.');
+      }
     } catch (error) {
       console.error('Error fetching properties:', error);
-      setError('Failed to load properties');
+      setError(error.response?.data?.message || 'Failed to load properties');
     }
   };
 
@@ -294,7 +304,7 @@ const PaymentForm = () => {
                     Amount <span className={styles.required}>*</span>
                   </label>
                   <div className={styles.inputWithPrefix}>
-                    <span className={styles.prefix}>$</span>
+                    <span className={styles.prefix}>₹</span>
                     <input
                       type="number"
                       id="amount"
