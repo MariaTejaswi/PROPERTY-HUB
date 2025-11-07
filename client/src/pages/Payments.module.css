@@ -249,14 +249,30 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+/* Desktop */
+@media (max-width: 1200px) {
+  .payments {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Tablet landscape */
+@media (max-width: 1024px) {
   .payments {
     padding: var(--spacing-lg);
+  }
+}
+
+/* Tablet portrait */
+@media (max-width: 768px) {
+  .payments {
+    padding: var(--spacing-md);
   }
 
   .paymentHeader {
     flex-direction: column;
     gap: var(--spacing-md);
+    align-items: flex-start;
   }
 
   .paymentAmount {
@@ -267,6 +283,58 @@
   }
 
   .amount {
+    font-size: 1.75rem;
+  }
+  
+  .paymentCard {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .payments {
+    padding: var(--spacing-sm);
+  }
+  
+  .header h1 {
+    font-size: 1.35rem;
+  }
+  
+  .amount {
     font-size: 1.5rem;
+  }
+  
+  .paymentCard {
+    padding: var(--spacing-sm);
+  }
+  
+  .paymentInfo {
+    gap: var(--spacing-sm);
+  }
+  
+  .modal {
+    padding: var(--spacing-md);
+    margin: var(--spacing-sm);
+    max-width: calc(100% - var(--spacing-lg));
+  }
+  
+  .modalHeader h2 {
+    font-size: 1.125rem;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 375px) {
+  .payments {
+    padding: var(--spacing-xs);
+  }
+  
+  .amount {
+    font-size: 1.25rem;
+  }
+  
+  .amountLabel {
+    font-size: 0.8rem;
   }
 }

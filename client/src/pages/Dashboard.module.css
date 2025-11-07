@@ -166,30 +166,116 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+/* Desktop */
+@media (max-width: 1200px) {
+  .dashboard {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Tablet landscape */
+@media (max-width: 1024px) {
   .dashboard {
     padding: var(--spacing-lg);
   }
+  
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .actionsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Tablet portrait */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: var(--spacing-md);
+  }
 
   .header h1 {
-    font-size: 1.5rem;
+    font-size: 1.625rem;
   }
 
   .statsGrid {
     grid-template-columns: 1fr;
+    gap: var(--spacing-md);
   }
 
   .actionsGrid {
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+  }
+  
+  .statCard, .actionCard {
+    padding: var(--spacing-md);
   }
 }
 
+/* Mobile */
 @media (max-width: 480px) {
+  .dashboard {
+    padding: var(--spacing-sm);
+  }
+  
+  .header {
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .header h1 {
+    font-size: 1.35rem;
+  }
+  
   .actionsGrid {
     grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
   }
 
   .statValue {
+    font-size: 1.75rem;
+  }
+  
+  .statLabel {
+    font-size: 0.875rem;
+  }
+  
+  .actionIcon {
+    font-size: 1.75rem;
+  }
+  
+  .recentActivity {
+    margin-top: var(--spacing-lg);
+  }
+  
+  .activityItem {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Small mobile */
+@media (max-width: 375px) {
+  .dashboard {
+    padding: var(--spacing-xs);
+  }
+  
+  .header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .statValue {
     font-size: 1.5rem;
+  }
+  
+  .actionCard {
+    padding: var(--spacing-sm);
+  }
+  
+  .actionIcon {
+    font-size: 1.5rem;
+  }
+  
+  .actionCard h3 {
+    font-size: 0.9rem;
   }
 }

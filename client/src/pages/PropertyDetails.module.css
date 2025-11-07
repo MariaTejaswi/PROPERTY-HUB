@@ -148,19 +148,37 @@
 }
 
 /* Responsive */
+/* Desktop */
+@media (max-width: 1200px) {
+  .propertyDetails {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Tablet landscape */
 @media (max-width: 1024px) {
+  .propertyDetails {
+    padding: var(--spacing-lg);
+  }
+  
   .content {
     grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
   }
 
   .sidebar {
     grid-row: 2;
   }
+  
+  .infoGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
+/* Tablet portrait */
 @media (max-width: 768px) {
   .propertyDetails {
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
   }
 
   .header {
@@ -168,14 +186,24 @@
     gap: var(--spacing-md);
     align-items: flex-start;
   }
+  
+  .header h1 {
+    font-size: 1.5rem;
+  }
 
   .actions {
     width: 100%;
     flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .actions button {
+    width: 100%;
   }
 
   .infoGrid {
     grid-template-columns: 1fr;
+    gap: var(--spacing-md);
   }
 
   .propertyImage {
@@ -184,5 +212,74 @@
 
   .imagePlaceholder {
     height: 250px;
+  }
+  
+  .amenitiesList {
+    grid-template-columns: 1fr;
+  }
+  
+  .quickActionsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .propertyDetails {
+    padding: var(--spacing-sm);
+  }
+  
+  .header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .statusBadge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+  
+  .propertyImage,
+  .imagePlaceholder {
+    height: 200px;
+  }
+  
+  .imagePlaceholder {
+    font-size: 4rem;
+  }
+  
+  .section {
+    padding: var(--spacing-md);
+  }
+  
+  .section h2 {
+    font-size: 1.125rem;
+  }
+  
+  .infoItem label {
+    font-size: 0.8rem;
+  }
+  
+  .infoItem span {
+    font-size: 0.95rem;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 375px) {
+  .propertyDetails {
+    padding: var(--spacing-xs);
+  }
+  
+  .propertyImage,
+  .imagePlaceholder {
+    height: 180px;
+  }
+  
+  .section {
+    padding: var(--spacing-sm);
+  }
+  
+  .actions {
+    gap: var(--spacing-xs);
   }
 }

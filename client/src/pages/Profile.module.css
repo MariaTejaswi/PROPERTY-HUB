@@ -149,17 +149,91 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+/* Desktop */
+@media (max-width: 1200px) {
+  .profile {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Tablet landscape */
+@media (max-width: 1024px) {
   .profile {
     padding: var(--spacing-lg);
+  }
+}
+
+/* Tablet portrait */
+@media (max-width: 768px) {
+  .profile {
+    padding: var(--spacing-md);
   }
 
   .avatarSection {
     flex-direction: column;
     text-align: center;
+    align-items: center;
   }
 
   .infoGrid {
     grid-template-columns: 1fr;
+  }
+  
+  .section {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .profile {
+    padding: var(--spacing-sm);
+  }
+  
+  .header h1 {
+    font-size: 1.35rem;
+  }
+  
+  .avatar {
+    width: 100px;
+    height: 100px;
+    font-size: 2.5rem;
+  }
+  
+  .userName {
+    font-size: 1.25rem;
+  }
+  
+  .section {
+    padding: var(--spacing-sm);
+  }
+  
+  .section h2 {
+    font-size: 1.125rem;
+  }
+  
+  .infoItem {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* Small mobile */
+@media (max-width: 375px) {
+  .profile {
+    padding: var(--spacing-xs);
+  }
+  
+  .avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+  }
+  
+  .userName {
+    font-size: 1.125rem;
+  }
+  
+  .userRole {
+    font-size: 0.7rem;
   }
 }

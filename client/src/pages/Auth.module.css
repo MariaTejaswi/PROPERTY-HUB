@@ -152,16 +152,74 @@
 }
 
 /* Responsive */
+/* Tablet portrait */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-lg);
+  }
+  
+  .card {
+    max-width: 400px;
+    padding: var(--spacing-2xl);
+  }
+  
+  .title {
+    font-size: 1.75rem;
+  }
+}
+
+/* Mobile */
 @media (max-width: 480px) {
   .container {
     padding: var(--spacing-md);
+    min-height: 100vh;
   }
 
   .card {
     padding: var(--spacing-xl);
+    max-width: 100%;
   }
 
   .title {
     font-size: 1.5rem;
+  }
+  
+  .subtitle {
+    font-size: 0.875rem;
+  }
+  
+  .demoCredentials {
+    padding: var(--spacing-md);
+  }
+  
+  .credItem {
+    font-size: 0.8rem;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 375px) {
+  .container {
+    padding: var(--spacing-sm);
+  }
+  
+  .card {
+    padding: var(--spacing-lg);
+  }
+  
+  .title {
+    font-size: 1.35rem;
+  }
+  
+  .demoCredentials {
+    padding: var(--spacing-sm);
+  }
+  
+  .demoCredentials h4 {
+    font-size: 0.875rem;
+  }
+  
+  .credItem {
+    font-size: 0.75rem;
   }
 }

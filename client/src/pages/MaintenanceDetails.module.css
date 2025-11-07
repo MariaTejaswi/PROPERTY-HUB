@@ -239,19 +239,37 @@
 }
 
 /* Responsive */
+/* Desktop */
+@media (max-width: 1200px) {
+  .maintenanceDetails {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Tablet landscape */
 @media (max-width: 1024px) {
+  .maintenanceDetails {
+    padding: var(--spacing-lg);
+  }
+  
   .content {
     grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
   }
 
   .sidebar {
     grid-row: 2;
   }
+  
+  .images {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
+/* Tablet portrait */
 @media (max-width: 768px) {
   .maintenanceDetails {
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
   }
 
   .header {
@@ -259,21 +277,79 @@
     gap: var(--spacing-md);
     align-items: flex-start;
   }
+  
+  .header h1 {
+    font-size: 1.5rem;
+  }
 
   .actions {
     width: 100%;
     flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .actions button {
+    width: 100%;
   }
 
   .requestHeader {
     flex-direction: column;
+    gap: var(--spacing-sm);
   }
 
   .badges {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .images {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .maintenanceDetails {
+    padding: var(--spacing-sm);
+  }
+  
+  .header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .section {
+    padding: var(--spacing-md);
+  }
+  
+  .section h2 {
+    font-size: 1.125rem;
+  }
+  
+  .badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+  
+  .commentItem {
+    padding: var(--spacing-sm);
+  }
+  
+  .commentAuthor {
+    font-size: 0.875rem;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 375px) {
+  .maintenanceDetails {
+    padding: var(--spacing-xs);
+  }
+  
+  .section {
+    padding: var(--spacing-sm);
+  }
+  
+  .timelineItem {
+    padding-left: var(--spacing-md);
   }
 }

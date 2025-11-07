@@ -263,9 +263,33 @@
 }
 
 /* Responsive */
+/* Desktop */
+@media (max-width: 1200px) {
+  .messages {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Tablet landscape */
+@media (max-width: 1024px) {
+  .messages {
+    padding: var(--spacing-lg);
+  }
+  
+  .container {
+    grid-template-columns: 300px 1fr;
+  }
+}
+
+/* Tablet portrait */
 @media (max-width: 768px) {
+  .messages {
+    padding: var(--spacing-md);
+  }
+  
   .container {
     grid-template-columns: 1fr;
+    height: calc(100vh - 200px);
   }
 
   .conversationsList {
@@ -282,5 +306,65 @@
 
   .messageContent {
     max-width: 85%;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .messages {
+    padding: var(--spacing-sm);
+  }
+  
+  .header h1 {
+    font-size: 1.35rem;
+  }
+  
+  .container {
+    height: calc(100vh - 180px);
+  }
+  
+  .conversation {
+    padding: var(--spacing-sm);
+  }
+  
+  .conversationName {
+    font-size: 0.95rem;
+  }
+  
+  .lastMessage {
+    font-size: 0.8rem;
+  }
+  
+  .messageContent {
+    max-width: 90%;
+    padding: var(--spacing-sm);
+  }
+  
+  .messageInput {
+    padding: var(--spacing-sm);
+  }
+  
+  .messageInput input {
+    padding: var(--spacing-sm);
+    font-size: 0.9rem;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 375px) {
+  .messages {
+    padding: var(--spacing-xs);
+  }
+  
+  .container {
+    height: calc(100vh - 160px);
+  }
+  
+  .messageContent {
+    max-width: 95%;
+  }
+  
+  .noSelectionIcon {
+    font-size: 3.5rem;
   }
 }

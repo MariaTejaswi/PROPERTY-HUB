@@ -76,3 +76,31 @@
   cursor: not-allowed;
   transform: none !important;
 }
+
+/* Responsive */
+@media (max-width: 480px) {
+  .button {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.9rem;
+  }
+  
+  .sm {
+    padding: 6px var(--spacing-sm);
+    font-size: 0.8rem;
+  }
+  
+  .lg {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .button {
+    font-size: 0.85rem;
+  }
+  
+  .sm {
+    font-size: 0.75rem;
+  }
+}

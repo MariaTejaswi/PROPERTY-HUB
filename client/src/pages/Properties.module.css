@@ -186,22 +186,141 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+/* Large desktop */
+@media (min-width: 1600px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  }
+}
+
+/* Desktop */
+@media (max-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-lg);
+  }
+}
+
+/* Tablet landscape */
+@media (max-width: 1024px) {
   .properties {
     padding: var(--spacing-lg);
+  }
+  
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
+  }
+  
+  .header h1 {
+    font-size: 1.75rem;
+  }
+}
+
+/* Tablet portrait */
+@media (max-width: 768px) {
+  .properties {
+    padding: var(--spacing-md);
   }
 
   .header {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .header h1 {
+    font-size: 1.5rem;
   }
 
   .grid {
     grid-template-columns: 1fr;
+    gap: var(--spacing-md);
   }
 
   .actions {
     flex-direction: column;
+    width: 100%;
+  }
+  
+  .actions button {
+    width: 100%;
+  }
+  
+  .propertyDetails {
+    gap: var(--spacing-md);
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .properties {
+    padding: var(--spacing-sm);
+  }
+  
+  .header {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .header h1 {
+    font-size: 1.35rem;
+  }
+  
+  .subtitle {
+    font-size: 0.875rem;
+  }
+  
+  .propertyImage {
+    height: 180px;
+  }
+  
+  .propertyContent {
+    padding: var(--spacing-md);
+  }
+  
+  .propertyContent h3 {
+    font-size: 1.1rem;
+  }
+  
+  .propertyDetails {
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+  
+  .rentAmount {
+    font-size: 1.25rem;
+  }
+  
+  .empty {
+    padding: var(--spacing-2xl) var(--spacing-md);
+  }
+  
+  .emptyIcon {
+    font-size: 4rem;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 375px) {
+  .properties {
+    padding: var(--spacing-xs);
+  }
+  
+  .propertyImage {
+    height: 160px;
+  }
+  
+  .propertyContent {
+    padding: var(--spacing-sm);
+  }
+  
+  .statusBadge {
+    font-size: 0.65rem;
+    padding: 4px 8px;
+  }
+  
+  .rentAmount {
+    font-size: 1.125rem;
   }
 }

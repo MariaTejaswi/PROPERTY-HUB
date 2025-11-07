@@ -302,19 +302,37 @@
 }
 
 /* Responsive */
+/* Desktop */
+@media (max-width: 1200px) {
+  .leaseDetails {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Tablet landscape */
 @media (max-width: 1024px) {
+  .leaseDetails {
+    padding: var(--spacing-lg);
+  }
+  
   .content {
     grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
   }
 
   .signatures {
     grid-template-columns: 1fr;
   }
+  
+  .termsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
+/* Tablet portrait */
 @media (max-width: 768px) {
   .leaseDetails {
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
   }
 
   .header {
@@ -322,10 +340,19 @@
     gap: var(--spacing-md);
     align-items: flex-start;
   }
+  
+  .header h1 {
+    font-size: 1.5rem;
+  }
 
   .actions {
     width: 100%;
     flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .actions button {
+    width: 100%;
   }
 
   .termsGrid {
@@ -334,5 +361,71 @@
 
   .modalOverlay {
     padding: var(--spacing-md);
+  }
+  
+  .modalContent {
+    margin: var(--spacing-md);
+    max-width: calc(100% - var(--spacing-xl));
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .leaseDetails {
+    padding: var(--spacing-sm);
+  }
+  
+  .header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .section {
+    padding: var(--spacing-md);
+  }
+  
+  .section h2 {
+    font-size: 1.125rem;
+  }
+  
+  .statusBadge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+  
+  .signatureBox {
+    padding: var(--spacing-md);
+  }
+  
+  .modalOverlay {
+    padding: var(--spacing-sm);
+  }
+  
+  .modalContent {
+    margin: var(--spacing-sm);
+    max-width: calc(100% - var(--spacing-lg));
+  }
+  
+  .modalBody {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Small mobile */
+@media (max-width: 375px) {
+  .leaseDetails {
+    padding: var(--spacing-xs);
+  }
+  
+  .section {
+    padding: var(--spacing-sm);
+  }
+  
+  .signatureBox {
+    padding: var(--spacing-sm);
+  }
+  
+  .modalContent {
+    margin: var(--spacing-xs);
+    max-width: calc(100% - var(--spacing-md));
   }
 }

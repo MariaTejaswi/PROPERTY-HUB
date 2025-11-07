@@ -291,9 +291,28 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+/* Desktop */
+@media (max-width: 1200px) {
+  .leases {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Tablet landscape */
+@media (max-width: 1024px) {
   .leases {
     padding: var(--spacing-lg);
+  }
+  
+  .leaseInfo {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Tablet portrait */
+@media (max-width: 768px) {
+  .leases {
+    padding: var(--spacing-md);
   }
 
   .header {
@@ -308,5 +327,68 @@
 
   .actions {
     flex-direction: column;
+    width: 100%;
+  }
+  
+  .actions button {
+    width: 100%;
+  }
+  
+  .modal {
+    margin: var(--spacing-md);
+    max-width: calc(100% - var(--spacing-xl));
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .leases {
+    padding: var(--spacing-sm);
+  }
+  
+  .header h1 {
+    font-size: 1.35rem;
+  }
+  
+  .leaseCard {
+    padding: var(--spacing-md);
+  }
+  
+  .leaseCard h3 {
+    font-size: 1.1rem;
+  }
+  
+  .modal {
+    margin: var(--spacing-sm);
+    max-width: calc(100% - var(--spacing-lg));
+  }
+  
+  .modalHeader h2 {
+    font-size: 1.125rem;
+  }
+  
+  .modalBody {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Small mobile */
+@media (max-width: 375px) {
+  .leases {
+    padding: var(--spacing-xs);
+  }
+  
+  .leaseCard {
+    padding: var(--spacing-sm);
+  }
+  
+  .badge {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+  
+  .modal {
+    margin: var(--spacing-xs);
+    max-width: calc(100% - var(--spacing-md));
   }
 }

@@ -90,21 +90,111 @@
 }
 
 /* Responsive */
+/* Desktop and below */
+@media (max-width: 1200px) {
+  .container {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .nav {
+    gap: var(--spacing-md);
+  }
+  
+  .navLink {
+    font-size: 0.9rem;
+  }
+}
+
+/* Tablet landscape */
+@media (max-width: 1024px) {
+  .logo h1 {
+    font-size: 1.35rem;
+  }
+  
+  .nav {
+    gap: var(--spacing-sm);
+  }
+}
+
+/* Tablet portrait */
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
     gap: var(--spacing-md);
+    padding: var(--spacing-md);
   }
 
   .nav {
     flex-wrap: wrap;
     justify-content: center;
+    width: 100%;
+  }
+  
+  .navLink {
+    padding: var(--spacing-xs) var(--spacing-md);
   }
 
   .user {
     border-left: none;
     border-top: 1px solid var(--border);
     padding-left: 0;
-    padding-top: var(--spacing-sm);
+    padding-top: var(--spacing-md);
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .userName {
+    font-size: 0.875rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .container {
+    padding: var(--spacing-sm);
+  }
+  
+  .logo h1 {
+    font-size: 1.2rem;
+  }
+  
+  .nav {
+    gap: var(--spacing-xs);
+  }
+  
+  .navLink {
+    font-size: 0.8rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .user {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+  
+  .logoutBtn {
+    width: 100%;
+    margin-top: var(--spacing-xs);
+  }
+}
+
+/* Small mobile */
+@media (max-width: 375px) {
+  .logo h1 {
+    font-size: 1.1rem;
+  }
+  
+  .navLink {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+  
+  .userName {
+    font-size: 0.75rem;
+  }
+  
+  .userRole {
+    font-size: 0.65rem;
+    padding: 1px 6px;
   }
 }
