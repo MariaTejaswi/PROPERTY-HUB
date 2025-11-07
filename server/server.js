@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
+const { initPaymentScheduler } = require('./services/paymentScheduler');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -16,6 +17,9 @@ const app = express();
 
 // Connect to database
 connectDB();
+
+// Initialize payment scheduler (auto-generate monthly payments)
+initPaymentScheduler();
 
 // Middleware
 app.use(cors());

@@ -57,6 +57,13 @@ const PaymentForm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.propertyId]);
 
+  useEffect(() => {
+    if (formData.leaseId && !isEditMode) {
+      handleLeaseSelection(formData.leaseId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.leaseId]);
+
   const fetchProperties = async () => {
     try {
       const response = await api.get('/properties');
@@ -148,6 +155,40 @@ const PaymentForm = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleLeaseSelection = (leaseId) => {
+    const selectedLease = leases.find(l => l._id === leaseId);
+    if (selectedLease) {
+      // Auto-fill amount and description from lease
+      const currentDate = new Date();
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      
+      // Calculate due date based on payment due day
+      const dueDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        selectedLease.paymentDueDay || 1
+      );
+      
+      // If due date is in the past, move to next month
+      if (dueDate < currentDate) {
+        dueDate.setMonth(dueDate.getMonth() + 1);
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        amount: selectedLease.rentAmount || '',
+        type: 'rent',
+        description: `Monthly rent for ${selectedLease.property?.name || 'property'} - ${monthNames[dueDate.getMonth()]} ${dueDate.getFullYear()}`,
+        dueDate: dueDate.toISOString().split('T')[0],
+        tenantId: selectedLease.tenant?._id || prev.tenantId,
+        propertyId: selectedLease.property?._id || prev.propertyId
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {

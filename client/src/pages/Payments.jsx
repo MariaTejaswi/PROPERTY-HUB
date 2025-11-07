@@ -12,12 +12,14 @@ import styles from './Payments.module.css';
 
 const Payments = () => {
   const { user, isLandlord, isTenant } = useAuth();
-  const navigate = useNavigate();  const [payments, setPayments] = useState([]);
+  const navigate = useNavigate();
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     fetchPayments();
@@ -62,6 +64,66 @@ const Payments = () => {
     }
   };
 
+  const handleGenerateAllPayments = async () => {
+    if (!window.confirm('Generate rent payments for all active leases for this month?')) {
+      return;
+    }
+
+    setGenerating(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const currentDate = new Date();
+      const response = await api.post('/payments/generate-all', {
+        month: currentDate.getMonth(),
+        year: currentDate.getFullYear()
+      });
+
+      const { created, existing, errors } = response.data.results;
+      
+      let message = '';
+      if (created.length > 0) {
+        message += `✅ Generated ${created.length} new payment(s). `;
+      }
+      if (existing.length > 0) {
+        message += `ℹ️ ${existing.length} payment(s) already exist. `;
+      }
+      if (errors.length > 0) {
+        message += `⚠️ ${errors.length} error(s) occurred.`;
+      }
+
+      setSuccess(message || response.data.message);
+      fetchPayments();
+    } catch (error) {
+      console.error('Error generating payments:', error);
+      setError(error.response?.data?.message || 'Failed to generate payments');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleDownloadReceipt = async (paymentId) => {
+    try {
+      const response = await api.get(`/payments/${paymentId}/receipt`, {
+        responseType: 'blob'
+      });
+      
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `receipt-${paymentId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading receipt:', error);
+      setError('Failed to download receipt');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'paid':
@@ -95,9 +157,18 @@ const Payments = () => {
           </p>
         </div>
         {isLandlord && (
-          <Button onClick={() => navigate('/payments/new')}>
-            + Create Payment
-          </Button>
+          <div className={styles.headerActions}>
+            <Button 
+              variant="secondary" 
+              onClick={handleGenerateAllPayments}
+              disabled={generating}
+            >
+              {generating ? 'Generating...' : '🔄 Generate Monthly Payments'}
+            </Button>
+            <Button onClick={() => navigate('/payments/new')}>
+              + Create Payment
+            </Button>
+          </div>
         )}
       </div>
 
@@ -213,11 +284,11 @@ const Payments = () => {
                 </div>
               )}
 
-              {payment.status === 'paid' && payment.receiptUrl && (
+              {payment.status === 'paid' && (
                 <div className={styles.actions}>
                   <Button 
                     variant="outline" 
-                    onClick={() => window.open(`http://localhost:5000${payment.receiptUrl}`, '_blank')}
+                    onClick={() => handleDownloadReceipt(payment._id)}
                     fullWidth
                   >
                     Download Receipt

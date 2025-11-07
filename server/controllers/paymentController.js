@@ -173,7 +173,19 @@ exports.processPaymentDemo = async (req, res) => {
         processingTime: result.processingTime
       };
       
+      // Generate receipt number manually if not exists
+      if (!payment.receiptNumber) {
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        payment.receiptNumber = `RCP-${year}${month}-${random}`;
+      }
+      
       await payment.save();
+      
+      // Populate payment data before generating receipt
+      await payment.populate(['tenant', 'landlord', 'property']);
       
       // Generate receipt (async, don't wait)
       generatePaymentReceipt(payment, payment.tenant, payment.landlord, payment.property)
@@ -306,6 +318,16 @@ exports.getReceipt = async (req, res) => {
     
     // Generate receipt if not exists
     if (!payment.receiptUrl) {
+      // Generate receipt number if not exists
+      if (!payment.receiptNumber) {
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        payment.receiptNumber = `RCP-${year}${month}-${random}`;
+        await payment.save();
+      }
+      
       const receiptPath = await generatePaymentReceipt(
         payment,
         payment.tenant,
@@ -316,8 +338,12 @@ exports.getReceipt = async (req, res) => {
       await payment.save();
     }
     
+    // Convert URL path to file system path
+    const path = require('path');
+    const filePath = path.join(__dirname, '..', payment.receiptUrl);
+    
     // Send file
-    res.download(payment.receiptUrl);
+    res.download(filePath);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -358,6 +384,205 @@ exports.getPaymentStats = async (req, res) => {
         totalPending,
         totalOverdue,
         details: stats
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Generate payment from lease
+// @route   POST /api/payments/generate-from-lease
+// @access  Private (Landlord only)
+exports.generatePaymentFromLease = async (req, res) => {
+  try {
+    const { leaseId, month, year } = req.body;
+    
+    if (!leaseId) {
+      return res.status(400).json({ message: 'Lease ID is required' });
+    }
+    
+    const lease = await Lease.findById(leaseId)
+      .populate('property')
+      .populate('tenant')
+      .populate('landlord');
+    
+    if (!lease) {
+      return res.status(404).json({ message: 'Lease not found' });
+    }
+    
+    // Check if user is the landlord
+    if (lease.landlord._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    
+    if (lease.status !== 'active') {
+      return res.status(400).json({ message: 'Lease must be active to generate payments' });
+    }
+    
+    // Determine payment month/year
+    const targetMonth = month !== undefined ? month : new Date().getMonth();
+    const targetYear = year !== undefined ? year : new Date().getFullYear();
+    
+    // Check if payment already exists for this month
+    const existingPayment = await Payment.findOne({
+      lease: lease._id,
+      dueDate: {
+        $gte: new Date(targetYear, targetMonth, 1),
+        $lt: new Date(targetYear, targetMonth + 1, 1)
+      }
+    });
+    
+    if (existingPayment) {
+      return res.status(400).json({ 
+        message: 'Payment already exists for this month',
+        payment: existingPayment
+      });
+    }
+    
+    const dueDate = new Date(targetYear, targetMonth, lease.paymentDueDay);
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    const payment = new Payment({
+      property: lease.property._id,
+      tenant: lease.tenant._id,
+      landlord: lease.landlord._id,
+      lease: lease._id,
+      amount: lease.rentAmount,
+      type: 'rent',
+      description: `Monthly rent for ${lease.property.name} - ${monthNames[targetMonth]} ${targetYear}`,
+      dueDate: dueDate,
+      status: 'pending'
+    });
+    
+    await payment.save();
+    
+    const populatedPayment = await Payment.findById(payment._id)
+      .populate('property', 'name address')
+      .populate('tenant', 'name email')
+      .populate('landlord', 'name email')
+      .populate('lease');
+    
+    res.status(201).json({
+      success: true,
+      payment: populatedPayment
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Generate payments for all active leases
+// @route   POST /api/payments/generate-all
+// @access  Private (Landlord only)
+exports.generatePaymentsForAllLeases = async (req, res) => {
+  try {
+    const { month, year } = req.body;
+    
+    const targetMonth = month !== undefined ? month : new Date().getMonth();
+    const targetYear = year !== undefined ? year : new Date().getFullYear();
+    
+    // Find all active leases for this landlord
+    const activeLeases = await Lease.find({
+      landlord: req.user._id,
+      status: 'active',
+      startDate: { $lte: new Date() },
+      endDate: { $gte: new Date() }
+    }).populate('property tenant landlord');
+    
+    if (activeLeases.length === 0) {
+      return res.status(404).json({ message: 'No active leases found' });
+    }
+    
+    const results = {
+      created: [],
+      existing: [],
+      errors: []
+    };
+    
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    for (const lease of activeLeases) {
+      try {
+        // Check if payment already exists
+        const existingPayment = await Payment.findOne({
+          lease: lease._id,
+          dueDate: {
+            $gte: new Date(targetYear, targetMonth, 1),
+            $lt: new Date(targetYear, targetMonth + 1, 1)
+          }
+        });
+        
+        if (existingPayment) {
+          results.existing.push({
+            leaseId: lease._id,
+            property: lease.property.name,
+            payment: existingPayment
+          });
+          continue;
+        }
+        
+        const dueDate = new Date(targetYear, targetMonth, lease.paymentDueDay);
+        
+        const payment = new Payment({
+          property: lease.property._id,
+          tenant: lease.tenant._id,
+          landlord: lease.landlord._id,
+          lease: lease._id,
+          amount: lease.rentAmount,
+          type: 'rent',
+          description: `Monthly rent for ${lease.property.name} - ${monthNames[targetMonth]} ${targetYear}`,
+          dueDate: dueDate,
+          status: 'pending'
+        });
+        
+        await payment.save();
+        
+        results.created.push({
+          leaseId: lease._id,
+          property: lease.property.name,
+          payment: payment
+        });
+      } catch (error) {
+        results.errors.push({
+          leaseId: lease._id,
+          property: lease.property.name,
+          error: error.message
+        });
+      }
+    }
+    
+    res.status(201).json({
+      success: true,
+      message: `Generated ${results.created.length} payments. ${results.existing.length} already existed. ${results.errors.length} errors.`,
+      results
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Run payment scheduler manually (admin/testing)
+// @route   POST /api/payments/run-scheduler
+// @access  Private (Landlord only)
+exports.runPaymentScheduler = async (req, res) => {
+  try {
+    const { generateMonthlyPayments, updateOverduePayments } = require('../services/paymentScheduler');
+    
+    const generateResult = await generateMonthlyPayments();
+    const overdueResult = await updateOverduePayments();
+    
+    res.json({
+      success: true,
+      results: {
+        paymentsGenerated: generateResult,
+        overdueUpdated: overdueResult
       }
     });
   } catch (error) {

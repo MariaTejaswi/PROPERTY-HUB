@@ -10,7 +10,10 @@ const {
   updatePayment,
   deletePayment,
   getReceipt,
-  getPaymentStats
+  getPaymentStats,
+  generatePaymentFromLease,
+  generatePaymentsForAllLeases,
+  runPaymentScheduler
 } = require('../controllers/paymentController');
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/roleCheck');
@@ -35,6 +38,15 @@ router.use(protect);
 
 // Get payment statistics
 router.get('/stats', getPaymentStats);
+
+// Generate payment from lease (landlord only)
+router.post('/generate-from-lease', authorize('landlord'), generatePaymentFromLease);
+
+// Generate payments for all active leases (landlord only)
+router.post('/generate-all', authorize('landlord'), generatePaymentsForAllLeases);
+
+// Run payment scheduler manually (landlord only)
+router.post('/run-scheduler', authorize('landlord'), runPaymentScheduler);
 
 // Get all payments
 router.get('/', getPayments);

@@ -58,7 +58,7 @@ const generatePaymentReceipt = async (payment, tenant, landlord, property) => {
       
       const itemsData = [
         { description: 'Payment Type', amount: payment.type.replace('_', ' ').toUpperCase() },
-        { description: 'Amount', amount: `$${payment.amount.toFixed(2)}` },
+        { description: 'Amount', amount: `₹${payment.amount.toFixed(2)}` },
         { description: 'Payment Method', amount: payment.paymentMethod.replace('_', ' ').toUpperCase() },
         { description: 'Transaction ID', amount: payment.demoPayment?.transactionId || 'N/A' }
       ];
@@ -82,7 +82,7 @@ const generatePaymentReceipt = async (payment, tenant, landlord, property) => {
       // Total
       doc.fontSize(14)
          .text('Total Paid:', 50, doc.y, { continued: true, bold: true })
-         .text(`$${payment.amount.toFixed(2)}`, { align: 'right' });
+         .text(`₹${payment.amount.toFixed(2)}`, { align: 'right' });
       
       doc.moveDown(3);
       
@@ -97,7 +97,9 @@ const generatePaymentReceipt = async (payment, tenant, landlord, property) => {
       doc.end();
       
       writeStream.on('finish', () => {
-        resolve(filePath);
+        // Return URL path instead of file system path
+        const urlPath = `/uploads/receipts/${fileName}`;
+        resolve(urlPath);
       });
       
       writeStream.on('error', (error) => {
@@ -162,8 +164,8 @@ const generateLeaseDocument = async (lease, landlord, tenant, property) => {
       doc.fontSize(10);
       doc.text(`Lease Start Date: ${new Date(lease.startDate).toLocaleDateString()}`);
       doc.text(`Lease End Date: ${new Date(lease.endDate).toLocaleDateString()}`);
-      doc.text(`Monthly Rent: $${lease.rentAmount.toFixed(2)}`);
-      doc.text(`Security Deposit: $${lease.depositAmount.toFixed(2)}`);
+      doc.text(`Monthly Rent: ₹${lease.rentAmount.toFixed(2)}`);
+      doc.text(`Security Deposit: ₹${lease.depositAmount.toFixed(2)}`);
       doc.text(`Rent Due Date: ${lease.paymentDueDay} of each month`);
       doc.moveDown(2);
       
@@ -192,7 +194,9 @@ const generateLeaseDocument = async (lease, landlord, tenant, property) => {
       doc.end();
       
       writeStream.on('finish', () => {
-        resolve(filePath);
+        // Return URL path instead of file system path
+        const urlPath = `/uploads/leases/${fileName}`;
+        resolve(urlPath);
       });
       
       writeStream.on('error', (error) => {
