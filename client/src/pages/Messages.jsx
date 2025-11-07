@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
-import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Loader from '../components/common/Loader';
 import Alert from '../components/common/Alert';
@@ -17,8 +16,71 @@ const Messages = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef(null);
   const pollingInterval = useRef(null);
+
+  const fetchConversations = useCallback(async () => {
+    try {
+      const response = await api.get('/messages/conversations');
+      
+      // Transform conversations to include user info
+      const convs = (response.data.conversations || []).map(conv => {
+        const latestMsg = conv.latestMessage;
+        // Get the other user in the conversation
+        const otherUser = latestMsg.sender._id === user.id 
+          ? latestMsg.recipients[0] 
+          : latestMsg.sender;
+        
+        return {
+          user: otherUser,
+          lastMessage: latestMsg,
+          unreadCount: conv.unreadCount || 0,
+          conversationId: conv.conversationId
+        };
+      });
+      
+      setConversations(convs);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      setError('Failed to load conversations');
+    } finally {
+      setLoading(false);
+    }
+  }, [user.id]);
+
+  const fetchMessages = useCallback(async (userId, silent = false) => {
+    try {
+      // Generate conversation ID from user IDs
+      const userIds = [user.id, userId].sort();
+      const conversationId = userIds.join('-');
+      
+      const response = await api.get(`/messages?conversationId=${conversationId}&limit=50`);
+      const msgs = response.data.messages || [];
+      
+      setMessages(msgs);
+      
+      // Mark messages as read
+      const unreadMessages = msgs.filter(
+        m => m.sender._id !== user.id && !m.isRead.some(read => read.user === user.id)
+      );
+      
+      for (const msg of unreadMessages) {
+        await api.put(`/messages/${msg._id}/read`);
+      }
+      
+      if (!silent) {
+        fetchConversations();
+      }
+    } catch (error) {
+      if (!silent) {
+        console.error('Error fetching messages:', error);
+        setError('Failed to load messages');
+      }
+    }
+  }, [user.id, fetchConversations]);
 
   useEffect(() => {
     fetchConversations();
@@ -29,7 +91,7 @@ const Messages = () => {
         clearInterval(pollingInterval.current);
       }
     };
-  }, []);
+  }, [fetchConversations]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -51,48 +113,15 @@ const Messages = () => {
         clearInterval(pollingInterval.current);
       }
     };
-  }, [selectedUser]);
+  }, [selectedUser, fetchMessages]);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
-
-  const fetchConversations = async () => {
-    try {
-      const response = await api.get('/messages');
-      setConversations(response.data.conversations || []);
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-      setError('Failed to load conversations');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMessages = async (userId, silent = false) => {
-    try {
-      const response = await api.get(`/messages/conversation/${userId}`);
-      setMessages(response.data.messages || []);
-      
-      // Mark messages as read
-      const unreadMessages = response.data.messages.filter(
-        m => m.sender._id !== user.id && !m.isRead.includes(user.id)
-      );
-      
-      for (const msg of unreadMessages) {
-        await api.put(`/messages/${msg._id}/read`);
-      }
-      
-      if (!silent) {
-        fetchConversations();
-      }
-    } catch (error) {
-      if (!silent) {
-        console.error('Error fetching messages:', error);
-        setError('Failed to load messages');
-      }
-    }
-  };
+  }, [messages, scrollToBottom]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -101,7 +130,7 @@ const Messages = () => {
     setSending(true);
     try {
       await api.post('/messages', {
-        recipient: selectedUser._id,
+        recipientIds: [selectedUser._id],
         content: newMessage
       });
       
@@ -116,9 +145,33 @@ const Messages = () => {
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const fetchAvailableUsers = async () => {
+    try {
+      const response = await api.get('/auth/users');
+      // Filter out current user
+      const users = (response.data.users || []).filter(u => u._id !== user.id);
+      setAvailableUsers(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setError('Failed to load users');
+    }
   };
+
+  const handleNewMessageClick = () => {
+    setShowNewMessageModal(true);
+    fetchAvailableUsers();
+  };
+
+  const handleStartConversation = (selectedUser) => {
+    setSelectedUser(selectedUser);
+    setShowNewMessageModal(false);
+    setSearchTerm('');
+  };
+
+  const filteredUsers = availableUsers.filter(u =>
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) return <Loader fullScreen />;
 
@@ -129,6 +182,13 @@ const Messages = () => {
         <div className={styles.conversationsList}>
           <div className={styles.conversationsHeader}>
             <h2>Messages</h2>
+            <Button
+              variant="primary"
+              size="small"
+              onClick={handleNewMessageClick}
+            >
+              + New
+            </Button>
           </div>
           
           {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -231,6 +291,55 @@ const Messages = () => {
           )}
         </div>
       </div>
+
+      {/* New Message Modal */}
+      {showNewMessageModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowNewMessageModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>New Message</h3>
+              <button 
+                className={styles.modalClose}
+                onClick={() => setShowNewMessageModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoFocus
+              />
+              <div className={styles.usersList}>
+                {filteredUsers.length === 0 ? (
+                  <p className={styles.noUsers}>No users found</p>
+                ) : (
+                  filteredUsers.map((u) => (
+                    <div
+                      key={u._id}
+                      className={styles.userItem}
+                      onClick={() => handleStartConversation(u)}
+                    >
+                      <div className={styles.avatar}>
+                        {u.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className={styles.userInfo}>
+                        <h4>{u.name}</h4>
+                        <p>{u.email}</p>
+                        <span className={styles.userRole}>{u.role}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
