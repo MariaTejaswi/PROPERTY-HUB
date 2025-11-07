@@ -19,6 +19,7 @@ import MaintenanceForm from './pages/MaintenanceForm';
 import Messages from './pages/Messages';
 import Leases from './pages/Leases';
 import LeaseDetails from './pages/LeaseDetails';
+import LeaseForm from './pages/LeaseForm';
 import Profile from './pages/Profile';
 
 // Private Route Component
@@ -57,6 +58,8 @@ function App() {
           <Route path="/maintenance/:id" element={<PrivateRoute><MaintenanceDetails /></PrivateRoute>} />
           <Route path="/maintenance/:id/edit" element={<PrivateRoute><MaintenanceForm /></PrivateRoute>} />
           <Route path="/leases" element={<PrivateRoute><Leases /></PrivateRoute>} />
+          <Route path="/leases/new" element={<PrivateRoute><LeaseForm /></PrivateRoute>} />
+          <Route path="/leases/:id/edit" element={<PrivateRoute><LeaseForm /></PrivateRoute>} />
           <Route path="/leases/:id" element={<PrivateRoute><LeaseDetails /></PrivateRoute>} />
           <Route path="/messages" element={<PrivateRoute><Messages /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />

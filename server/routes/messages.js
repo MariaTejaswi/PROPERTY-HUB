@@ -11,14 +11,14 @@ const {
   markConversationAsRead,
   deleteMessage,
   getUnreadCount,
-  searchMessages
+  searchMessages,
+  addReaction
 } = require('../controllers/messageController');
 const { protect } = require('../middleware/auth');
 
 // Validation rules
 const messageValidation = [
-  body('recipientIds').isArray({ min: 1 }).withMessage('At least one recipient is required'),
-  body('content').notEmpty().trim().withMessage('Message content is required')
+  body('recipientIds').isArray({ min: 1 }).withMessage('At least one recipient is required')
 ];
 
 // All routes are protected
@@ -50,6 +50,9 @@ router.post(
 
 // Mark message as read
 router.put('/:id/read', markAsRead);
+
+// Add reaction to message
+router.post('/:id/reaction', addReaction);
 
 // Delete message
 router.delete('/:id', deleteMessage);

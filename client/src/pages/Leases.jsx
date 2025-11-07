@@ -42,18 +42,38 @@ const Leases = () => {
     if (!signingLease) return;
 
     try {
+      console.log('Signing lease:', signingLease._id);
+      console.log('Signature data length:', signatureData?.length);
+      
       const role = isLandlord ? 'landlord' : 'tenant';
-      await api.post(`/leases/${signingLease._id}/sign`, {
+      const response = await api.post(`/leases/${signingLease._id}/sign`, {
         signatureData,
         role
       });
       
+      console.log('Sign response:', response.data);
       setSuccess('Lease signed successfully!');
       setSigningLease(null);
       fetchLeases();
     } catch (error) {
       console.error('Error signing lease:', error);
-      setError('Failed to sign lease');
+      console.error('Error response:', error.response?.data);
+      setError(error.response?.data?.message || 'Failed to sign lease');
+    }
+  };
+
+  const handleDelete = async (leaseId) => {
+    if (!window.confirm('Are you sure you want to delete this lease? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/leases/${leaseId}`);
+      setSuccess('Lease deleted successfully');
+      fetchLeases();
+    } catch (error) {
+      console.error('Error deleting lease:', error);
+      setError(error.response?.data?.message || 'Failed to delete lease');
     }
   };
 
@@ -71,16 +91,18 @@ const Leases = () => {
   };
 
   const canSign = (lease) => {
+    if (!lease.signatures) return false;
+    
     if (isLandlord) {
-      return !lease.signatures.landlordSignature;
+      return !lease.signatures?.landlord?.signed;
     } else if (isTenant) {
-      return !lease.signatures.tenantSignature && lease.tenant?._id === user.id;
+      return !lease.signatures?.tenant?.signed && lease.tenant?._id === user.id;
     }
     return false;
   };
 
   const isFullySigned = (lease) => {
-    return lease.signatures.landlordSignature && lease.signatures.tenantSignature;
+    return lease.signatures?.landlord?.signed && lease.signatures?.tenant?.signed;
   };
 
   if (loading) return <Loader fullScreen />;
@@ -189,16 +211,16 @@ const Leases = () => {
                 <h4>Signatures</h4>
                 <div className={styles.signatureRow}>
                   <span className={styles.sigLabel}>Landlord:</span>
-                  {lease.signatures.landlordSignature ? (
-                    <span className={styles.signed}>✓ Signed on {formatDate(lease.signatures.landlordSignedAt)}</span>
+                  {lease.signatures?.landlord?.signed ? (
+                    <span className={styles.signed}>✓ Signed on {formatDate(lease.signatures.landlord.signedAt)}</span>
                   ) : (
                     <span className={styles.pending}>Pending</span>
                   )}
                 </div>
                 <div className={styles.signatureRow}>
                   <span className={styles.sigLabel}>Tenant:</span>
-                  {lease.signatures.tenantSignature ? (
-                    <span className={styles.signed}>✓ Signed on {formatDate(lease.signatures.tenantSignedAt)}</span>
+                  {lease.signatures?.tenant?.signed ? (
+                    <span className={styles.signed}>✓ Signed on {formatDate(lease.signatures.tenant.signedAt)}</span>
                   ) : (
                     <span className={styles.pending}>Pending</span>
                   )}
@@ -216,7 +238,6 @@ const Leases = () => {
                   variant="outline" 
                   size="sm"
                   onClick={() => navigate(`/leases/${lease._id}`)}
-                  fullWidth
                 >
                   View Details
                 </Button>
@@ -228,6 +249,25 @@ const Leases = () => {
                   >
                     Sign Lease
                   </Button>
+                )}
+                
+                {isLandlord && lease.status === 'draft' && (
+                  <>
+                    <Button 
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => navigate(`/leases/${lease._id}/edit`)}
+                    >
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDelete(lease._id)}
+                    >
+                      Delete
+                    </Button>
+                  </>
                 )}
                 
                 {isFullySigned(lease) && lease.pdfUrl && (

@@ -55,14 +55,14 @@ const LeaseDetails = () => {
   };
 
   const canSign = () => {
-    if (!lease) return false;
-    if (isLandlord && !lease.signatures.landlordSignature) return true;
-    if (isTenant && !lease.signatures.tenantSignature && lease.tenant._id === user.id) return true;
+    if (!lease || !lease.signatures) return false;
+    if (isLandlord && !lease.signatures?.landlord?.signed) return true;
+    if (isTenant && !lease.signatures?.tenant?.signed && lease.tenant._id === user.id) return true;
     return false;
   };
 
   const isFullySigned = () => {
-    return lease?.signatures.landlordSignature && lease?.signatures.tenantSignature;
+    return lease?.signatures?.landlord?.signed && lease?.signatures?.tenant?.signed;
   };
 
   const downloadPDF = async () => {
@@ -77,6 +77,19 @@ const LeaseDetails = () => {
       link.remove();
     } catch (err) {
       setError('Failed to download PDF');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this lease? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/leases/${id}`);
+      navigate('/leases');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete lease');
     }
   };
 
@@ -118,6 +131,16 @@ const LeaseDetails = () => {
           ← Back to Leases
         </Button>
         <div className={styles.actions}>
+          {isLandlord && lease.status === 'draft' && (
+            <>
+              <Button variant="secondary" onClick={() => navigate(`/leases/${id}/edit`)}>
+                Edit Lease
+              </Button>
+              <Button variant="danger" onClick={handleDelete}>
+                Delete
+              </Button>
+            </>
+          )}
           {canSign() && (
             <Button onClick={() => setShowSignModal(true)}>
               Sign Lease
@@ -221,15 +244,15 @@ const LeaseDetails = () => {
             <div className={styles.signatures}>
               <div className={styles.signatureSection}>
                 <h4>Landlord Signature</h4>
-                {lease.signatures.landlordSignature ? (
+                {lease.signatures?.landlord?.signed ? (
                   <div className={styles.signatureContainer}>
                     <img 
-                      src={lease.signatures.landlordSignature} 
+                      src={lease.signatures.landlord.signatureData} 
                       alt="Landlord Signature"
                       className={styles.signatureImage}
                     />
                     <p className={styles.signatureDate}>
-                      Signed on {formatDate(lease.signatures.landlordSignedAt)}
+                      Signed on {formatDate(lease.signatures.landlord.signedAt)}
                     </p>
                     <p className={styles.signedBy}>
                       {lease.landlord.name}
@@ -244,15 +267,15 @@ const LeaseDetails = () => {
 
               <div className={styles.signatureSection}>
                 <h4>Tenant Signature</h4>
-                {lease.signatures.tenantSignature ? (
+                {lease.signatures?.tenant?.signed ? (
                   <div className={styles.signatureContainer}>
                     <img 
-                      src={lease.signatures.tenantSignature} 
+                      src={lease.signatures.tenant.signatureData} 
                       alt="Tenant Signature"
                       className={styles.signatureImage}
                     />
                     <p className={styles.signatureDate}>
-                      Signed on {formatDate(lease.signatures.tenantSignedAt)}
+                      Signed on {formatDate(lease.signatures.tenant.signedAt)}
                     </p>
                     <p className={styles.signedBy}>
                       {lease.tenant.name}

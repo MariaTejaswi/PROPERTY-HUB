@@ -22,8 +22,8 @@ const messageSchema = new mongoose.Schema({
   },
   content: {
     type: String,
-    required: [true, 'Message content is required'],
-    trim: true
+    trim: true,
+    default: ''
   },
   property: {
     type: mongoose.Schema.Types.ObjectId,
@@ -41,6 +41,20 @@ const messageSchema = new mongoose.Schema({
       ref: 'User'
     },
     readAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  reactions: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    emoji: {
+      type: String,
+      required: true
+    },
+    createdAt: {
       type: Date,
       default: Date.now
     }

@@ -99,14 +99,27 @@ exports.getMessages = async (req, res) => {
 // @access  Private
 exports.sendMessage = async (req, res) => {
   try {
-    const { recipientIds, subject, content, propertyId, relatedTo, relatedId } = req.body;
+    let recipientIds, subject, content, propertyId, relatedTo, relatedId;
+    
+    // Handle both JSON and FormData
+    if (req.body.recipientIds && typeof req.body.recipientIds === 'string') {
+      recipientIds = JSON.parse(req.body.recipientIds);
+      subject = req.body.subject;
+      content = req.body.content;
+      propertyId = req.body.propertyId;
+      relatedTo = req.body.relatedTo;
+      relatedId = req.body.relatedId;
+    } else {
+      ({ recipientIds, subject, content, propertyId, relatedTo, relatedId } = req.body);
+    }
     
     if (!recipientIds || recipientIds.length === 0) {
       return res.status(400).json({ message: 'At least one recipient is required' });
     }
     
-    if (!content || content.trim() === '') {
-      return res.status(400).json({ message: 'Message content is required' });
+    // Content is optional if files are attached
+    if ((!content || content.trim() === '') && (!req.files || req.files.length === 0)) {
+      return res.status(400).json({ message: 'Message content or attachments required' });
     }
     
     // Verify recipients exist
@@ -124,7 +137,7 @@ exports.sendMessage = async (req, res) => {
       sender: req.user._id,
       recipients: recipientIds,
       subject,
-      content,
+      content: content || '',
       type: recipientIds.length > 1 ? 'group' : 'direct',
       relatedTo: relatedTo || 'general',
       relatedId,
@@ -289,6 +302,66 @@ exports.searchMessages = async (req, res) => {
       success: true,
       count: messages.length,
       messages
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add reaction to message
+// @route   POST /api/messages/:id/reaction
+// @access  Private
+exports.addReaction = async (req, res) => {
+  try {
+    const { emoji } = req.body;
+    
+    if (!emoji) {
+      return res.status(400).json({ message: 'Emoji is required' });
+    }
+    
+    const message = await Message.findById(req.params.id);
+    
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+    
+    // Check if user is sender or recipient
+    const isSender = message.sender.toString() === req.user._id.toString();
+    const isRecipient = message.recipients.some(
+      r => r.toString() === req.user._id.toString()
+    );
+    
+    if (!isSender && !isRecipient) {
+      return res.status(403).json({ message: 'Not authorized to react to this message' });
+    }
+    
+    // Initialize reactions array if not exists
+    if (!message.reactions) {
+      message.reactions = [];
+    }
+    
+    // Check if user already reacted
+    const existingReactionIndex = message.reactions.findIndex(
+      r => r.user.toString() === req.user._id.toString()
+    );
+    
+    if (existingReactionIndex !== -1) {
+      // Update existing reaction
+      message.reactions[existingReactionIndex].emoji = emoji;
+    } else {
+      // Add new reaction
+      message.reactions.push({
+        user: req.user._id,
+        emoji
+      });
+    }
+    
+    await message.save();
+    
+    res.json({
+      success: true,
+      message: 'Reaction added successfully',
+      reactions: message.reactions
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

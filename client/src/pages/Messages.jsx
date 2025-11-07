@@ -19,8 +19,12 @@ const Messages = () => {
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
   const [availableUsers, setAvailableUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [showReactions, setShowReactions] = useState(null);
+  const [previewFiles, setPreviewFiles] = useState([]);
   const messagesEndRef = useRef(null);
   const pollingInterval = useRef(null);
+  const fileInputRef = useRef(null);
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -125,16 +129,30 @@ const Messages = () => {
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedUser) return;
+    if ((!newMessage.trim() && selectedFiles.length === 0) || !selectedUser) return;
 
     setSending(true);
     try {
-      await api.post('/messages', {
-        recipientIds: [selectedUser._id],
-        content: newMessage
+      const formData = new FormData();
+      formData.append('recipientIds', JSON.stringify([selectedUser._id]));
+      if (newMessage.trim()) {
+        formData.append('content', newMessage);
+      }
+      
+      // Add files
+      selectedFiles.forEach(file => {
+        formData.append('attachments', file);
+      });
+
+      await api.post('/messages', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
       
       setNewMessage('');
+      setSelectedFiles([]);
+      setPreviewFiles([]);
       fetchMessages(selectedUser._id);
       fetchConversations();
     } catch (error) {
@@ -143,6 +161,64 @@ const Messages = () => {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + selectedFiles.length > 3) {
+      setError('Maximum 3 files allowed');
+      return;
+    }
+
+    setSelectedFiles([...selectedFiles, ...files]);
+    
+    // Create preview URLs
+    const newPreviews = files.map(file => ({
+      file,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
+    }));
+    
+    setPreviewFiles([...previewFiles, ...newPreviews]);
+  };
+
+  const removeFile = (index) => {
+    const newFiles = [...selectedFiles];
+    const newPreviews = [...previewFiles];
+    
+    // Revoke preview URL if it exists
+    if (newPreviews[index].preview) {
+      URL.revokeObjectURL(newPreviews[index].preview);
+    }
+    
+    newFiles.splice(index, 1);
+    newPreviews.splice(index, 1);
+    
+    setSelectedFiles(newFiles);
+    setPreviewFiles(newPreviews);
+  };
+
+  const addReaction = async (messageId, emoji) => {
+    try {
+      await api.post(`/messages/${messageId}/reaction`, { emoji });
+      fetchMessages(selectedUser._id, true);
+      setShowReactions(null);
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      setError('Failed to add reaction');
+    }
+  };
+
+  const getReadStatus = (message) => {
+    if (message.sender._id !== user.id) return null;
+    
+    const isRead = message.isRead.some(read => 
+      read.user === selectedUser._id || read.user._id === selectedUser._id
+    );
+    
+    return isRead ? 'read' : 'sent';
   };
 
   const fetchAvailableUsers = async () => {
@@ -247,29 +323,154 @@ const Messages = () => {
                     <p>No messages yet. Start a conversation!</p>
                   </div>
                 ) : (
-                  messages.map((message) => (
-                    <div
-                      key={message._id}
-                      className={`${styles.message} ${message.sender._id === user.id ? styles.sent : styles.received}`}
-                    >
-                      <div className={styles.messageContent}>
-                        {message.sender._id !== user.id && (
-                          <span className={styles.senderName}>
-                            {message.sender.name}
-                          </span>
-                        )}
-                        <p>{message.content}</p>
-                        <span className={styles.messageTime}>
-                          {formatDateTime(message.createdAt)}
-                        </span>
+                  messages.map((message) => {
+                    const readStatus = getReadStatus(message);
+                    return (
+                      <div
+                        key={message._id}
+                        className={`${styles.message} ${message.sender._id === user.id ? styles.sent : styles.received}`}
+                      >
+                        <div className={styles.messageContent}>
+                          {message.sender._id !== user.id && (
+                            <span className={styles.senderName}>
+                              {message.sender.name}
+                            </span>
+                          )}
+                          
+                          {/* Message Text */}
+                          {message.content && <p>{message.content}</p>}
+                          
+                          {/* Attachments */}
+                          {message.attachments && message.attachments.length > 0 && (
+                            <div className={styles.attachments}>
+                              {message.attachments.map((file, idx) => (
+                                <div key={idx} className={styles.attachment}>
+                                  {file.mimeType?.startsWith('image/') ? (
+                                    <img 
+                                      src={file.url} 
+                                      alt={file.filename}
+                                      className={styles.attachmentImage}
+                                      onClick={() => window.open(file.url, '_blank')}
+                                    />
+                                  ) : (
+                                    <a 
+                                      href={file.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className={styles.attachmentFile}
+                                    >
+                                      <span className={styles.fileIcon}>📄</span>
+                                      <span className={styles.fileName}>{file.filename}</span>
+                                      <span className={styles.fileSize}>
+                                        {(file.size / 1024).toFixed(1)} KB
+                                      </span>
+                                    </a>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Reactions */}
+                          {message.reactions && message.reactions.length > 0 && (
+                            <div className={styles.reactions}>
+                              {message.reactions.map((reaction, idx) => (
+                                <span key={idx} className={styles.reaction}>
+                                  {reaction.emoji}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          
+                          <div className={styles.messageFooter}>
+                            <span className={styles.messageTime}>
+                              {formatDateTime(message.createdAt)}
+                            </span>
+                            
+                            {/* Read receipts for sent messages */}
+                            {readStatus && (
+                              <span className={styles.readReceipt}>
+                                {readStatus === 'read' ? (
+                                  <span className={styles.doubleTick}>✓✓</span>
+                                ) : (
+                                  <span className={styles.singleTick}>✓</span>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Reaction button */}
+                          <button
+                            className={styles.reactionButton}
+                            onClick={() => setShowReactions(showReactions === message._id ? null : message._id)}
+                          >
+                            😊
+                          </button>
+                          
+                          {/* Reaction picker */}
+                          {showReactions === message._id && (
+                            <div className={styles.reactionPicker}>
+                              {['👍', '❤️', '😂', '😮', '😢', '🙏'].map(emoji => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => addReaction(message._id, emoji)}
+                                  className={styles.emojiButton}
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
                 <div ref={messagesEndRef} />
               </div>
 
+              {/* File Preview */}
+              {previewFiles.length > 0 && (
+                <div className={styles.filePreview}>
+                  {previewFiles.map((file, idx) => (
+                    <div key={idx} className={styles.previewItem}>
+                      {file.preview ? (
+                        <img src={file.preview} alt={file.name} className={styles.previewImage} />
+                      ) : (
+                        <div className={styles.previewFile}>
+                          <span className={styles.fileIcon}>📄</span>
+                          <span className={styles.previewFileName}>{file.name}</span>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        className={styles.removeFile}
+                        onClick={() => removeFile(idx)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <form onSubmit={sendMessage} className={styles.chatInput}>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx,.txt"
+                  style={{ display: 'none' }}
+                />
+                <button
+                  type="button"
+                  className={styles.attachButton}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={sending}
+                >
+                  📎
+                </button>
                 <input
                   type="text"
                   value={newMessage}
@@ -277,7 +478,7 @@ const Messages = () => {
                   placeholder="Type a message..."
                   disabled={sending}
                 />
-                <Button type="submit" disabled={!newMessage.trim() || sending}>
+                <Button type="submit" disabled={(!newMessage.trim() && selectedFiles.length === 0) || sending}>
                   {sending ? 'Sending...' : 'Send'}
                 </Button>
               </form>
