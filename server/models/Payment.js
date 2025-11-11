@@ -85,8 +85,7 @@ const paymentSchema = new mongoose.Schema({
 
 // Generate receipt number before saving
 paymentSchema.pre('save', async function(next) {
-  // Generate receipt number when status becomes 'paid' and no receipt number exists
-  if (this.status === 'paid' && !this.receiptNumber) {
+  if (this.isNew && this.status === 'paid' && !this.receiptNumber) {
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');

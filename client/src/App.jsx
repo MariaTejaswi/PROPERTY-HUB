@@ -5,6 +5,7 @@ import Loader from './components/common/Loader';
 import Navbar from './components/layout/Navbar';
 
 // Pages
+import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -37,12 +38,24 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <Navbar />
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+        <AppContent />
+      </AuthProvider>
+    </Router>
+  );
+}
+
+// Separate component to use useAuth hook
+const AppContent = () => {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <>
+      {isAuthenticated && <Navbar />}
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
           {/* Protected routes */}
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
@@ -67,9 +80,8 @@ function App() {
           {/* 404 */}
           <Route path="*" element={<div style={{padding: '2rem'}}><h1>404 - Page Not Found</h1></div>} />
         </Routes>
-      </AuthProvider>
-    </Router>
+      </>
   );
-}
+};
 
 export default App;
