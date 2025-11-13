@@ -11,7 +11,12 @@
     "build": "cd client && npm run build",
     "seed": "node server/seeds/seedDatabase.js"
   },
-  "keywords": ["property", "management", "landlord", "rental"],
+  "keywords": [
+    "property",
+    "management",
+    "landlord",
+    "rental"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
