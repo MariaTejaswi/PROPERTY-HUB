@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children }) => {
   return user ? children : <Navigate to="/login" replace />;
 };
 
-// Public Route Component (redirects to dashboard if already logged in)
+// Public Route Component
 const PublicRoute = ({ children }) => {
   const { user } = useAuth();
   return !user ? children : <Navigate to="/dashboard" replace />;
@@ -37,20 +37,25 @@ const PublicRoute = ({ children }) => {
 
 function AppRoutes() {
   const { user } = useAuth();
-  
+  const location = useLocation();
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
+
+      {/* FIXED NAVBAR: show only when logged in AND not on home page */}
+      {location.pathname !== "/" && user && <Navbar />}
+
       <main className="flex-grow">
         <Routes>
-          {/* Public Routes */}
+
+          {/* Public */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
-          {/* Protected Routes */}
+          {/* Dashboard */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          
+
           {/* Properties */}
           <Route path="/properties" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
           <Route path="/properties/new" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} />
@@ -67,6 +72,9 @@ function AppRoutes() {
           <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
           <Route path="/payments/new" element={<ProtectedRoute><PaymentForm /></ProtectedRoute>} />
 
+          {/* ⭐ FIXED: EDIT PAYMENT ROUTE — THIS WAS MISSING ⭐ */}
+          <Route path="/payments/:id/edit" element={<ProtectedRoute><PaymentForm /></ProtectedRoute>} />
+
           {/* Maintenance */}
           <Route path="/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
           <Route path="/maintenance/new" element={<ProtectedRoute><MaintenanceForm /></ProtectedRoute>} />
@@ -79,10 +87,13 @@ function AppRoutes() {
           {/* Profile */}
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-          {/* Catch all - redirect to home */}
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
+
         </Routes>
       </main>
+
+      {/* Footer only for logged-in users */}
       {user && <Footer />}
     </div>
   );
