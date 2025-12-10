@@ -103,54 +103,62 @@ const Home = () => {
           </div>
         </nav>
 
-        {/* Hero Section */}
+{/* hero section  */}
         <section className="relative overflow-hidden pt-20 pb-32 px-4 sm:px-6 lg:px-8">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-transparent opacity-50"></div>
-          <div className="max-w-7xl mx-auto relative">
-            <div className="text-center max-w-4xl mx-auto">
-              <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
-                Modern Property Management
-                <span className="block text-primary-600 mt-2">Made Simple</span>
-              </h1>
-              <p className="text-xl text-black mb-10 max-w-3xl mx-auto leading-relaxed">
-                Streamline your rental property management with our all-in-one platform. 
-                Track payments, manage leases, handle maintenance, and communicate with tenants effortlessly.
-              </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <Link 
-                  to="/register" 
-                  className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  Start Free Trial
-                </Link>
-                <Link 
-                  to="/login" 
-                  className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-primary-700 bg-white hover:bg-gray-50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
-                >
-                  View Demo
-                </Link>
-              </div>
-              <p className="mt-6 text-sm text-gray-500">
-                No credit card required • 14-day free trial • Cancel anytime
-              </p>
-            </div>
+  <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-transparent opacity-50"></div>
+  
+  <div className="max-w-7xl mx-auto relative">
+    <div className="text-center max-w-4xl mx-auto">
+      
+      <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
+        Modern Property Management
+        <span className="block text-primary-600 mt-2">Made Simple</span>
+      </h1>
 
-            {/* Stats */}
-            <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-              {[
-                { number: '500+', label: 'Properties Managed' },
-                { number: '2,000+', label: 'Active Tenants' },
-                { number: '99.9%', label: 'Uptime' },
-                { number: '$50M+', label: 'Rent Collected' }
-              ].map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-3xl font-bold text-primary-600">{stat.number}</div>
-                  <div className="text-sm text-gray-600 mt-1">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+      <p className="text-xl text-black mb-10 max-w-3xl mx-auto leading-relaxed">
+        Streamline your rental property management with our all-in-one platform.
+        Track payments, manage leases, handle maintenance, and communicate with tenants effortlessly.
+      </p>
+
+      {/* Sign Up / Sign In Buttons */}
+      <div className="flex flex-col sm:flex-row justify-center gap-4">
+        <Link 
+          to="/register" 
+          className="inline-flex items-center justify-center px-6 py-2.5 text-base font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+        >
+          Sign Up
+        </Link>
+
+        <Link 
+          to="/login" 
+          className="inline-flex items-center justify-center px-6 py-2.5 text-base font-semibold text-primary-700 bg-white hover:bg-gray-50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
+        >
+          Sign In
+        </Link>
+      </div>
+
+    </div> 
+    {/* CLOSE text-center wrapper */}
+
+    {/* Stats */}
+    {/* <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+      {[
+        { number: '500+', label: 'Properties Managed' },
+        { number: '2,000+', label: 'Active Tenants' },
+        { number: '99.9%', label: 'Uptime' },
+        { number: '$50M+', label: 'Rent Collected' }
+      ].map((stat, index) => (
+        <div key={index} className="text-center">
+          <div className="text-3xl font-bold text-primary-600">{stat.number}</div>
+          <div className="text-sm text-gray-600 mt-1">{stat.label}</div>
+        </div>
+      ))}
+    </div> */}
+
+  </div>
+</section>
+
+              
 
         {/* Features Section */}
         <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
@@ -187,24 +195,7 @@ const Home = () => {
             </div>
           </div>
         </section>
-
-        {/* CTA Section */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary-600 to-primary-800">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl font-bold text-white mb-6">
-              Ready to Simplify Your Property Management?
-            </h2>
-            <p className="text-xl text-primary-100 mb-10">
-              Join hundreds of landlords who trust PropertyHub to manage their rental properties
-            </p>
-            <Link 
-              to="/register" 
-              className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-primary-600 bg-white hover:bg-gray-50 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200"
-            >
-              Get Started for Free
-            </Link>
-          </div>
-        </section>
+        
 
         {/* Footer */}
         <footer className="bg-gray-900 text-gray-300 py-12 px-4 sm:px-6 lg:px-8">
