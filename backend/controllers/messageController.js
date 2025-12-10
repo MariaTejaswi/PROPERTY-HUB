@@ -50,7 +50,11 @@ exports.getConversations = async (req, res) => {
       conversations
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Get conversations error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message || 'Failed to fetch conversations'
+    });
   }
 };
 
@@ -101,31 +105,31 @@ exports.sendMessage = async (req, res) => {
   try {
     let recipientIds, subject, content, propertyId, relatedTo, relatedId;
     
-    // Handle both JSON and FormData
-    if (req.body.recipientIds && typeof req.body.recipientIds === 'string') {
-      recipientIds = JSON.parse(req.body.recipientIds);
-      subject = req.body.subject;
-      content = req.body.content;
-      propertyId = req.body.propertyId;
-      relatedTo = req.body.relatedTo;
-      relatedId = req.body.relatedId;
-    } else {
-      ({ recipientIds, subject, content, propertyId, relatedTo, relatedId } = req.body);
-    }
+    // recipientIds should already be parsed by middleware
+    ({ recipientIds, subject, content, propertyId, relatedTo, relatedId } = req.body);
     
     if (!recipientIds || recipientIds.length === 0) {
-      return res.status(400).json({ message: 'At least one recipient is required' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'At least one recipient is required' 
+      });
     }
     
     // Content is optional if files are attached
     if ((!content || content.trim() === '') && (!req.files || req.files.length === 0)) {
-      return res.status(400).json({ message: 'Message content or attachments required' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Message content or attachments required' 
+      });
     }
     
     // Verify recipients exist
     const recipients = await User.find({ _id: { $in: recipientIds } });
     if (recipients.length !== recipientIds.length) {
-      return res.status(400).json({ message: 'One or more recipients not found' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'One or more recipients not found' 
+      });
     }
     
     // Generate conversation ID
@@ -165,7 +169,11 @@ exports.sendMessage = async (req, res) => {
       message
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Send message error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message || 'Failed to send message'
+    });
   }
 };
 
@@ -177,7 +185,10 @@ exports.markAsRead = async (req, res) => {
     const message = await Message.findById(req.params.id);
     
     if (!message) {
-      return res.status(404).json({ message: 'Message not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Message not found' 
+      });
     }
     
     // Check if user is a recipient
@@ -186,7 +197,10 @@ exports.markAsRead = async (req, res) => {
     );
     
     if (!isRecipient) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ 
+        success: false,
+        message: 'Not authorized' 
+      });
     }
     
     await message.markAsRead(req.user._id);

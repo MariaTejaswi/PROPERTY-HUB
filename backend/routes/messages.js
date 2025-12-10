@@ -16,6 +16,21 @@ const {
 } = require('../controllers/messageController');
 const { protect } = require('../middleware/auth');
 
+// Middleware to parse recipientIds from string to array if needed
+const parseRecipientIds = (req, res, next) => {
+  if (req.body.recipientIds && typeof req.body.recipientIds === 'string') {
+    try {
+      req.body.recipientIds = JSON.parse(req.body.recipientIds);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid recipientIds format'
+      });
+    }
+  }
+  next();
+};
+
 // Validation rules
 const messageValidation = [
   body('recipientIds').isArray({ min: 1 }).withMessage('At least one recipient is required')
@@ -43,6 +58,7 @@ router.get('/', getMessages);
 router.post(
   '/',
   upload.array('attachments', 3),
+  parseRecipientIds,
   messageValidation,
   validateRequest,
   sendMessage
