@@ -1,34 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import api from '../services/api';
-import Card from '../components/common/Card';
-import Button from '../components/common/Button';
-import Loader from '../components/common/Loader';
-import Alert from '../components/common/Alert';
-import { formatDate } from '../utils/formatters';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import api from "../services/api";
+import Alert from "../components/common/Alert";
+import Loader from "../components/common/Loader";
+import { formatDate } from "../utils/formatters";
 
 const Maintenance = () => {
   const { user, isLandlord, isTenant } = useAuth();
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [error, setError] = useState("");
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     fetchRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const fetchRequests = async () => {
     try {
-      const params = filter !== 'all' ? { status: filter } : {};
-      const response = await api.get('/maintenance', { params });
+      const params = filter !== "all" ? { status: filter } : {};
+      const response = await api.get("/maintenance", { params });
       setRequests(response.data.requests || []);
     } catch (error) {
-      console.error('Error fetching maintenance requests:', error);
-      setError('Failed to load maintenance requests');
+      setError("Failed to load maintenance requests");
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -39,240 +36,286 @@ const Maintenance = () => {
       await api.put(`/maintenance/${id}`, { status });
       fetchRequests();
     } catch (error) {
-      console.error('Error updating status:', error);
-      setError('Failed to update status');
+      setError("Failed to update status");
+      console.error(error);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this maintenance request?')) {
-      return;
-    }
-
+    if (!window.confirm("Delete this maintenance request?")) return;
     try {
       await api.delete(`/maintenance/${id}`);
       fetchRequests();
     } catch (error) {
-      console.error('Error deleting request:', error);
-      setError('Failed to delete request');
+      setError("Failed to delete request");
+      console.error(error);
     }
   };
 
   if (loading) return <Loader fullScreen />;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-black px-4 py-10">
+      <div className="max-w-7xl mx-auto">
+
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Maintenance Requests</h1>
-            <p className="text-gray-600 mt-1">
-              {isLandlord ? 'Manage property maintenance' : 'Your maintenance requests'}
+            <h1 className="text-4xl font-bold text-white tracking-tight">
+              Maintenance Requests
+            </h1>
+            <p className="text-gray-400 mt-2">
+              {isLandlord
+                ? "Manage and update property maintenance"
+                : "Track your submitted maintenance requests"}
             </p>
           </div>
+
           {isTenant && (
             <button
-              onClick={() => navigate('/maintenance/new')}
-              className="px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+              onClick={() => navigate("/maintenance/new")}
+              className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#e2c875] text-black 
+                         font-semibold rounded-lg shadow-lg transition"
             >
               + New Request
             </button>
           )}
         </div>
 
-        {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+        {error && (
+          <Alert
+            type="error"
+            message={error}
+            onClose={() => setError("")}
+          />
+        )}
 
-      <div className="flex gap-2 mb-6">
-        <button 
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            filter === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-          onClick={() => setFilter('all')}
-        >
-          All
-        </button>
-        <button 
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            filter === 'pending' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-          onClick={() => setFilter('pending')}
-        >
-          Pending
-        </button>
-        <button 
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            filter === 'in_progress' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-          onClick={() => setFilter('in_progress')}
-        >
-          In Progress
-        </button>
-        <button 
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            filter === 'completed' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-          onClick={() => setFilter('completed')}
-        >
-          Completed
-        </button>
-      </div>
-
-      {requests.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="text-6xl mb-4">🔧</div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">No maintenance requests</h2>
-          <p className="text-gray-600 mb-6">
-            {isTenant 
-              ? 'Submit a maintenance request when you need repairs' 
-              : 'No maintenance requests have been submitted yet'}
-          </p>
-          {isTenant && (
+        {/* FILTER BUTTONS */}
+        <div className="flex gap-3 mb-8">
+          {["all", "pending", "in_progress", "completed"].map((status) => (
             <button
-              onClick={() => navigate('/maintenance/new')}
-              className="px-6 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+              key={status}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                filter === status
+                  ? "bg-[#D4AF37] text-black shadow"
+                  : "bg-white/10 text-gray-300 hover:bg-white/20"
+              }`}
+              onClick={() => setFilter(status)}
             >
-              Create Your First Request
+              {status.replace("_", " ").toUpperCase()}
             </button>
-          )}
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {requests.map((request) => (
-            <div key={request._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{request.title}</h3>
-                  <p className="text-sm text-gray-600">
-                    📍 {request.property?.name || 'Property'}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    request.priority === 'high' ? 'bg-red-100 text-red-800' :
-                    request.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {request.priority}
-                  </span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    request.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {request.status.replace('_', ' ')}
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-gray-700 mb-4">{request.description}</p>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4 text-sm">
-                <div className="space-y-1">
-                  <span className="text-gray-500">Submitted by:</span>
-                  <p className="font-medium text-gray-900">{request.tenant?.name || 'Tenant'}</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-gray-500">Date:</span>
-                  <p className="font-medium text-gray-900">{formatDate(request.createdAt)}</p>
-                </div>
-                {request.assignedTo && (
-                  <div className="space-y-1">
-                    <span className="text-gray-500">Assigned to:</span>
-                    <p className="font-medium text-gray-900">{request.assignedTo.name}</p>
-                  </div>
-                )}
-              </div>
-
-              {request.images && request.images.length > 0 && (
-                <div className="flex gap-2 mb-4 overflow-x-auto">
-                  {request.images.map((image, index) => (
-                    <img 
-                      key={index}
-                      src={`http://localhost:5000${image}`}
-                      alt={`Request ${index + 1}`}
-                      className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200"
-                    />
-                  ))}
-                </div>
-              )}
-
-              {request.comments && request.comments.length > 0 && (
-                <div className="border-t border-gray-200 pt-4 mt-4">
-                  <h4 className="font-semibold text-gray-900 mb-3">Comments ({request.comments.length})</h4>
-                  <div className="space-y-3">
-                    {request.comments.slice(0, 2).map((comment) => (
-                      <div key={comment._id} className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex justify-between items-start mb-2">
-                          <strong className="text-sm font-medium text-gray-900">{comment.user?.name || 'User'}</strong>
-                          <span className="text-xs text-gray-500">
-                            {formatDate(comment.createdAt)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-700">{comment.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                  {request.comments.length > 2 && (
-                    <button 
-                      className="text-sm text-primary-600 hover:text-primary-700 font-medium mt-3"
-                      onClick={() => navigate(`/maintenance/${request._id}`)}
-                    >
-                      View all {request.comments.length} comments
-                    </button>
-                  )}
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-200">
-                <button 
-                  className="flex-1 min-w-[120px] px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
-                  onClick={() => navigate(`/maintenance/${request._id}`)}
-                >
-                  View Details
-                </button>
-                
-                {isTenant && request.tenant?._id === user._id && request.status === 'pending' && (
-                  <>
-                    <button 
-                      className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
-                      onClick={() => navigate(`/maintenance/${request._id}/edit`)}
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      className="px-4 py-2 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors"
-                      onClick={() => handleDelete(request._id)}
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-                
-                {isLandlord && request.status !== 'completed' && (
-                  <>
-                    {request.status === 'pending' && (
-                      <button 
-                        className="px-4 py-2 bg-secondary-600 text-white font-medium rounded-lg hover:bg-secondary-700 transition-colors"
-                        onClick={() => updateStatus(request._id, 'in_progress')}
-                      >
-                        Start Work
-                      </button>
-                    )}
-                    {request.status === 'in_progress' && (
-                      <button 
-                        className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
-                        onClick={() => updateStatus(request._id, 'completed')}
-                      >
-                        Mark Complete
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
           ))}
         </div>
-      )}
+
+        {/* EMPTY STATE */}
+        {requests.length === 0 ? (
+          <div className="text-center py-20 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+            <div className="text-7xl mb-4">🔧</div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              No maintenance requests
+            </h2>
+            <p className="text-gray-400 mb-6">
+              {isTenant
+                ? "Submit a maintenance request whenever something needs attention."
+                : "There are no maintenance requests at the moment."}
+            </p>
+
+            {isTenant && (
+              <button
+                onClick={() => navigate("/maintenance/new")}
+                className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#e2c875] 
+                           text-black font-semibold rounded-lg shadow-lg transition"
+              >
+                Create Your First Request
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            {requests.map((req) => (
+              <div
+                key={req._id}
+                className="bg-white/10 backdrop-blur-xl border border-white/10 
+                           p-6 rounded-xl shadow-xl hover:shadow-2xl transition"
+              >
+                {/* TOP SECTION */}
+                <div className="flex justify-between items-start mb-5">
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">
+                      {req.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm">
+                      📍 {req.property?.name || "Property"}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {/* PRIORITY */}
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        req.priority === "high"
+                          ? "bg-red-500/20 text-red-400"
+                          : req.priority === "medium"
+                          ? "bg-yellow-500/20 text-yellow-300"
+                          : "bg-green-500/20 text-green-300"
+                      }`}
+                    >
+                      {req.priority}
+                    </span>
+
+                    {/* STATUS */}
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        req.status === "pending"
+                          ? "bg-yellow-500/20 text-yellow-300"
+                          : req.status === "in_progress"
+                          ? "bg-blue-500/20 text-blue-300"
+                          : "bg-green-500/20 text-green-300"
+                      }`}
+                    >
+                      {req.status.replace("_", " ")}
+                    </span>
+                  </div>
+                </div>
+
+                {/* DESCRIPTION */}
+                <p className="text-gray-300 mb-4">{req.description}</p>
+
+                {/* DETAILS GRID */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-5">
+                  <div>
+                    <p className="text-gray-400">Submitted by:</p>
+                    <p className="text-white font-medium">
+                      {req.tenant?.name}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-400">Date:</p>
+                    <p className="text-white font-medium">
+                      {formatDate(req.createdAt)}
+                    </p>
+                  </div>
+
+                  {req.assignedTo && (
+                    <div>
+                      <p className="text-gray-400">Assigned to:</p>
+                      <p className="text-white font-medium">
+                        {req.assignedTo?.name}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* IMAGE PREVIEW */}
+                {req.images?.length > 0 && (
+                  <div className="flex gap-3 overflow-x-auto mb-5">
+                    {req.images.map((img, i) => (
+                      <img
+                        key={i}
+                        src={`http://localhost:5000${img}`}
+                        className="w-28 h-28 object-cover rounded-lg border border-white/10"
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* COMMENTS PREVIEW */}
+                {req.comments?.length > 0 && (
+                  <div className="border-t border-white/10 pt-4">
+                    <h4 className="text-white font-semibold mb-3">
+                      Comments ({req.comments.length})
+                    </h4>
+
+                    {req.comments.slice(0, 2).map((c) => (
+                      <div key={c._id} className="bg-white/5 p-3 rounded-lg mb-2">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-white font-medium text-sm">
+                            {c.user?.name}
+                          </span>
+                          <span className="text-gray-400 text-xs">
+                            {formatDate(c.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-gray-300 text-sm">{c.text}</p>
+                      </div>
+                    ))}
+
+                    {req.comments.length > 2 && (
+                      <button
+                        onClick={() => navigate(`/maintenance/${req._id}`)}
+                        className="text-[#D4AF37] text-sm font-medium hover:underline mt-2"
+                      >
+                        View all comments →
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* ACTION BUTTONS */}
+                <div className="flex flex-wrap gap-3 mt-6 border-t border-white/10 pt-5">
+                  {/* VIEW DETAILS */}
+                  <button
+                    onClick={() => navigate(`/maintenance/${req._id}`)}
+                    className="px-4 py-2 bg-white/10 text-white rounded-lg 
+                               hover:bg-white/20 transition"
+                  >
+                    View Details
+                  </button>
+
+                  {/* TENANT EDITING */}
+                  {isTenant &&
+                    req.tenant?._id === user._id &&
+                    req.status === "pending" && (
+                      <>
+                        <button
+                          onClick={() =>
+                            navigate(`/maintenance/${req._id}/edit`)
+                          }
+                          className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(req._id)}
+                          className="px-4 py-2 bg-red-500/20 text-red-300 rounded-lg 
+                                     hover:bg-red-500/30 transition"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+
+                  {/* LANDLORD WORKFLOW */}
+                  {isLandlord && req.status !== "completed" && (
+                    <>
+                      {req.status === "pending" && (
+                        <button
+                          onClick={() => updateStatus(req._id, "in_progress")}
+                          className="px-4 py-2 bg-blue-500/20 text-blue-300 rounded-lg 
+                                     hover:bg-blue-500/30 transition"
+                        >
+                          Start Work
+                        </button>
+                      )}
+
+                      {req.status === "in_progress" && (
+                        <button
+                          onClick={() => updateStatus(req._id, "completed")}
+                          className="px-4 py-2 bg-green-600 hover:bg-green-700 
+                                     text-white rounded-lg transition"
+                        >
+                          Mark Complete
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

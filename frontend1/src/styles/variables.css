@@ -1,74 +1,77 @@
 :root {
-  /* Colors */
-  --primary: #6366F1;
-  --primary-dark: #4F46E5;
-  --primary-light: #818CF8;
-  --secondary: #14B8A6;
-  --secondary-dark: #0D9488;
-  --accent: #F43F5E;
-  --accent-light: #FB7185;
-  --success: #10B981;
-  --warning: #F59E0B;
-  --error: #EF4444;
-  --info: #3B82F6;
-  
-  /* Neutral Colors */
-  --bg-primary: #F8FAFC;
-  --bg-secondary: #F1F5F9;
-  --bg-white: #FFFFFF;
-  --text-primary: #1E293B;
-  --text-secondary: #64748B;
-  --text-light: #94A3B8;
-  --border: #E2E8F0;
-  --border-light: #F1F5F9;
-  
-  /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
-  
-  /* Border Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-full: 9999px;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-base: 200ms ease;
-  --transition-slow: 300ms ease;
-  
-  /* Typography */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  --font-mono: 'Courier New', Courier, monospace;
-  
-  /* Breakpoints (for reference in media queries) */
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
+    /* ----------------------------------------------------
+     LUXURY GOLD THEME TOKENS
+  ---------------------------------------------------- */
+    /* BRAND COLORS */
+    --primary: #D4AF37;
+    /* Gold */
+    --primary-dark: #c69d2f;
+    --primary-light: #e6c766;
+    --secondary: #1a1a1a;
+    /* Deep charcoal */
+    --secondary-dark: #0d0d0d;
+    --accent: #9b8c60;
+    /* Antique gold */
+    --accent-light: #c2b68a;
+    /* STATUS COLORS */
+    --success: #27c499;
+    --warning: #e5b75a;
+    --error: #e85c5c;
+    --info: #6ea8ff;
+    /* BACKGROUNDS */
+    --bg-primary: #000000;
+    /* Jet black */
+    --bg-secondary: #0d0d0d;
+    --bg-white: rgba(255, 255, 255, 0.04);
+    /* Soft glass */
+    /* TEXT */
+    --text-primary: #ffffff;
+    /* Pure white */
+    --text-secondary: #bcbcbc;
+    --text-light: #8a8a8a;
+    /* BORDERS */
+    --border: rgba(255, 255, 255, 0.15);
+    --border-light: rgba(255, 255, 255, 0.08);
+    /* SPACING */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    /* RADIUS */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.7rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.4rem;
+    --radius-full: 9999px;
+    /* SHADOWS */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.7);
+    /* FONT STACK */
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'Courier New', Courier, monospace;
+    /* TRANSITIONS */
+    --transition-fast: 150ms ease;
+    --transition-base: 220ms ease;
+    --transition-slow: 300ms ease;
+    /* LUX GLASS EFFECT */
+    --glass: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.12);
 }
 
-/* Dark mode variables (optional for future implementation) */
+
+/* OPTIONAL DARK MODE TOGGLE (same values) */
+
 [data-theme="dark"] {
-  --bg-primary: #0F172A;
-  --bg-secondary: #1E293B;
-  --bg-white: #334155;
-  --text-primary: #F1F5F9;
-  --text-secondary: #CBD5E1;
-  --text-light: #94A3B8;
-  --border: #334155;
-  --border-light: #1E293B;
+    --bg-primary: #000000;
+    --bg-secondary: #0d0d0d;
+    --bg-white: rgba(255, 255, 255, 0.05);
+    --text-primary: #ffffff;
+    --text-secondary: #bcbcbc;
+    --text-light: #8a8a8a;
+    --border: rgba(255, 255, 255, 0.15);
+    --border-light: rgba(255, 255, 255, 0.08);
 }

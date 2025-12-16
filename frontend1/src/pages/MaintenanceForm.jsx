@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import api from '../services/api';
-import Card from '../components/common/Card';
-import Button from '../components/common/Button';
-import Loader from '../components/common/Loader';
-import Alert from '../components/common/Alert';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import api from "../services/api";
+import Card from "../components/common/Card";
+import Button from "../components/common/Button";
+import Loader from "../components/common/Loader";
+import Alert from "../components/common/Alert";
 
 const MaintenanceForm = () => {
   const { id } = useParams();
@@ -15,341 +15,299 @@ const MaintenanceForm = () => {
 
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(isEditMode);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [properties, setProperties] = useState([]);
 
   const [formData, setFormData] = useState({
-    propertyId: '',
-    title: '',
-    description: '',
-    category: 'other',
-    priority: 'medium',
-    images: []
+    propertyId: "",
+    title: "",
+    description: "",
+    category: "other",
+    priority: "medium",
+    images: [],
   });
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
 
   const categories = [
-    { value: 'plumbing', label: 'Plumbing' },
-    { value: 'electrical', label: 'Electrical' },
-    { value: 'hvac', label: 'HVAC' },
-    { value: 'appliance', label: 'Appliance' },
-    { value: 'structural', label: 'Structural' },
-    { value: 'pest_control', label: 'Pest Control' },
-    { value: 'cleaning', label: 'Cleaning' },
-    { value: 'landscaping', label: 'Landscaping' },
-    { value: 'security', label: 'Security' },
-    { value: 'other', label: 'Other' }
+    { value: "plumbing", label: "Plumbing" },
+    { value: "electrical", label: "Electrical" },
+    { value: "hvac", label: "HVAC" },
+    { value: "appliance", label: "Appliance" },
+    { value: "structural", label: "Structural" },
+    { value: "pest_control", label: "Pest Control" },
+    { value: "cleaning", label: "Cleaning" },
+    { value: "landscaping", label: "Landscaping" },
+    { value: "security", label: "Security" },
+    { value: "other", label: "Other" },
   ];
 
   const priorities = [
-    { value: 'low', label: 'Low', description: 'Non-urgent, can wait' },
-    { value: 'medium', label: 'Medium', description: 'Should be addressed soon' },
-    { value: 'high', label: 'High', description: 'Needs attention quickly' },
-    { value: 'urgent', label: 'Urgent', description: 'Emergency, immediate attention' }
+    { value: "low", label: "Low", description: "Non-urgent" },
+    { value: "medium", label: "Medium", description: "Should be addressed soon" },
+    { value: "high", label: "High", description: "Needs attention quickly" },
+    { value: "urgent", label: "Urgent", description: "Emergency" },
   ];
 
   useEffect(() => {
     fetchProperties();
-    if (isEditMode) {
-      fetchMaintenanceRequest();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (isEditMode) fetchMaintenanceRequest();
   }, [id]);
 
   const fetchProperties = async () => {
     try {
-      const response = await api.get('/properties');
-      // Filter properties where user is tenant
-      const userProperties = response.data.filter(
-        prop => prop.currentTenant?._id === user._id || prop.tenant?._id === user._id
+      const response = await api.get("/properties");
+      const userProps = response.data.filter(
+        (prop) => prop.currentTenant?._id === user._id || prop.tenant?._id === user._id
       );
-      setProperties(userProperties);
-    } catch (error) {
-      console.error('Error fetching properties:', error);
-      setError('Failed to load properties');
+      setProperties(userProps);
+    } catch {
+      setError("Failed to load properties");
     }
   };
 
   const fetchMaintenanceRequest = async () => {
     try {
       const response = await api.get(`/maintenance/${id}`);
-      const request = response.data;
-      
+      const req = response.data;
+
       setFormData({
-        propertyId: request.property._id,
-        title: request.title,
-        description: request.description,
-        category: request.category,
-        priority: request.priority
+        propertyId: req.property._id,
+        title: req.title,
+        description: req.description,
+        category: req.category,
+        priority: req.priority,
       });
-      
-      setExistingImages(request.images || []);
-    } catch (error) {
-      console.error('Error fetching maintenance request:', error);
-      setError('Failed to load maintenance request');
+
+      setExistingImages(req.images || []);
+    } catch {
+      setError("Failed to load maintenance request");
     } finally {
       setFetchLoading(false);
     }
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
   };
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    setSelectedFiles(files);
+    setSelectedFiles([...e.target.files]);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
       const data = new FormData();
-      data.append('propertyId', formData.propertyId);
-      data.append('title', formData.title);
-      data.append('description', formData.description);
-      data.append('category', formData.category);
-      data.append('priority', formData.priority);
-
-      // Append images
-      selectedFiles.forEach(file => {
-        data.append('images', file);
-      });
+      data.append("propertyId", formData.propertyId);
+      data.append("title", formData.title);
+      data.append("description", formData.description);
+      data.append("category", formData.category);
+      data.append("priority", formData.priority);
+      selectedFiles.forEach((file) => data.append("images", file));
 
       let response;
+
       if (isEditMode) {
         response = await api.put(`/maintenance/${id}`, data, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+          headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
-        response = await api.post('/maintenance', data, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+        response = await api.post("/maintenance", data, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
       }
 
-      setSuccess(isEditMode ? 'Request updated successfully!' : 'Request submitted successfully!');
-      
+      setSuccess(isEditMode ? "Request updated!" : "Request submitted!");
+
       setTimeout(() => {
         navigate(`/maintenance/${response.data._id || id}`);
-      }, 1500);
+      }, 1200);
     } catch (error) {
-      console.error('Error submitting maintenance request:', error);
-      setError(error.response?.data?.message || 'Failed to submit request');
+      setError(error.response?.data?.message || "Failed to submit request");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    navigate('/maintenance');
-  };
-
   if (fetchLoading) return <Loader fullScreen />;
 
   return (
-    <div className="">
-      <div className="">
-        <h2>{isEditMode ? 'Edit Maintenance Request' : 'New Maintenance Request'}</h2>
-        <p className="">
-          {isEditMode ? 'Update your maintenance request details' : 'Submit a maintenance request for your property'}
-        </p>
-      </div>
+    <div className="min-h-screen bg-black py-10 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h2 className="text-3xl font-bold text-[#D4AF37]">
+            {isEditMode ? "Edit Request" : "New Maintenance Request"}
+          </h2>
+          <p className="text-gray-400 mt-2">
+            {isEditMode
+              ? "Update your maintenance issue details"
+              : "Submit a maintenance request for your property"}
+          </p>
+        </div>
 
-      {error && <Alert type="error" message={error} onClose={() => setError('')} />}
-      {success && <Alert type="success" message={success} />}
+        {error && <Alert type="error" message={error} onClose={() => setError("")} />}
+        {success && <Alert type="success" message={success} />}
 
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <div className="">
-            {/* Property Selection */}
-            <div className="">
-              <h3>Property Information</h3>
-              <div className="">
-                <label htmlFor="propertyId">
-                  Property <span className="">*</span>
-                </label>
-                <select
-                  id="propertyId"
-                  name="propertyId"
-                  value={formData.propertyId}
-                  onChange={handleChange}
-                  required
-                  disabled={isEditMode}
-                  className=""
-                >
-                  <option value="">Select a property</option>
-                  {properties.map(property => (
-                    <option key={property._id} value={property._id}>
-                      {property.name} - {property.address?.street}, {property.address?.city}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        {/* FORM */}
+        <form onSubmit={handleSubmit}>
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-xl space-y-10">
+
+            {/* PROPERTY */}
+            <div>
+              <h3 className="text-xl font-semibold text-white mb-4">Property Information</h3>
+
+              <label className="text-gray-300">Select Property *</label>
+              <select
+                name="propertyId"
+                disabled={isEditMode}
+                value={formData.propertyId}
+                onChange={handleChange}
+                required
+                className="w-full mt-2 bg-white/10 border border-white/20 text-white p-3 rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
+              >
+                <option value="" className="text-black">
+                  Select a property
+                </option>
+
+                {properties.map((p) => (
+                  <option key={p._id} value={p._id} className="text-black">
+                    {p.name} - {p.address?.street}, {p.address?.city}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Request Details */}
-            <div className="">
-              <h3>Request Details</h3>
-              
-              <div className="">
-                <label htmlFor="title">
-                  Title <span className="">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="Brief description of the issue"
-                  required
-                  className=""
-                />
-              </div>
+            {/* DETAILS */}
+            <div>
+              <h3 className="text-xl font-semibold text-white mb-4">Request Details</h3>
 
-              <div className="">
-                <div className="">
-                  <label htmlFor="category">
-                    Category <span className="">*</span>
-                  </label>
+              {/* Title */}
+              <label className="text-gray-300">Title *</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+                placeholder="Brief description of the issue"
+                className="w-full mt-2 mb-6 p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:ring-2 focus:ring-[#D4AF37]"
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Category */}
+                <div>
+                  <label className="text-gray-300">Category *</label>
                   <select
-                    id="category"
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
                     required
-                    className=""
+                    className="w-full mt-2 bg-white/10 border border-white/20 text-white p-3 rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
                   >
-                    {categories.map(cat => (
-                      <option key={cat.value} value={cat.value}>
-                        {cat.label}
+                    {categories.map((c) => (
+                      <option key={c.value} value={c.value} className="text-black">
+                        {c.label}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                <div className="">
-                  <label htmlFor="priority">
-                    Priority <span className="">*</span>
-                  </label>
+                {/* Priority */}
+                <div>
+                  <label className="text-gray-300">Priority *</label>
                   <select
-                    id="priority"
                     name="priority"
                     value={formData.priority}
                     onChange={handleChange}
                     required
-                    className=""
+                    className="w-full mt-2 bg-white/10 border border-white/20 text-white p-3 rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
                   >
-                    {priorities.map(pri => (
-                      <option key={pri.value} value={pri.value}>
-                        {pri.label}
+                    {priorities.map((p) => (
+                      <option key={p.value} value={p.value} className="text-black">
+                        {p.label}
                       </option>
                     ))}
                   </select>
-                  <small className="">
-                    {priorities.find(p => p.value === formData.priority)?.description}
-                  </small>
+                  <p className="text-gray-400 text-sm mt-1">
+                    {priorities.find((p) => p.value === formData.priority)?.description}
+                  </p>
                 </div>
               </div>
 
-              <div className="">
-                <label htmlFor="description">
-                  Description <span className="">*</span>
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Provide detailed information about the issue..."
-                  rows="6"
-                  required
-                  className=""
-                />
-                <small className="">
-                  Include as much detail as possible to help us resolve the issue quickly
-                </small>
-              </div>
+              {/* Description */}
+              <label className="text-gray-300 mt-6 block">Description *</label>
+              <textarea
+                name="description"
+                rows="6"
+                value={formData.description}
+                onChange={handleChange}
+                required
+                placeholder="Describe the issue in detail..."
+                className="w-full mt-2 bg-white/10 border border-white/20 text-white p-3 rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
+              />
             </div>
 
-            {/* Images */}
-            <div className="">
-              <h3>Images (Optional)</h3>
-              <p className="">
-                Upload photos of the issue to help us better understand the problem
+            {/* IMAGES */}
+            <div>
+              <h3 className="text-xl font-semibold text-white mb-2">Images (Optional)</h3>
+              <p className="text-gray-400 mb-4">
+                Upload clear photos of the issue for quicker diagnosis.
               </p>
 
               {existingImages.length > 0 && (
-                <div className="">
-                  <h4>Current Images:</h4>
-                  <div className="">
-                    {existingImages.map((image, index) => (
-                      <div key={index} className="">
-                        <img 
-                          src={`http://localhost:5000${image}`} 
-                          alt={`Existing ${index + 1}`}
-                        />
-                      </div>
+                <div className="mb-4">
+                  <h4 className="text-gray-300 mb-2">Current Images:</h4>
+                  <div className="flex gap-3 flex-wrap">
+                    {existingImages.map((img, i) => (
+                      <img
+                        key={i}
+                        src={`http://localhost:5000${img}`}
+                        alt=""
+                        className="w-28 h-28 object-cover rounded-lg border border-white/20"
+                      />
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="">
-                <label htmlFor="images" className="">
-                  {isEditMode ? 'Add More Images' : 'Upload Images'}
-                </label>
-                <input
-                  type="file"
-                  id="images"
-                  name="images"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className=""
-                />
-                {selectedFiles.length > 0 && (
-                  <p className="">
-                    {selectedFiles.length} new image(s) selected
-                  </p>
-                )}
-                <small className="">
-                  Accepted formats: JPG, PNG. Max 5MB per image.
-                </small>
-              </div>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileChange}
+                className="text-gray-300"
+              />
+
+              {selectedFiles.length > 0 && (
+                <p className="text-gray-400 mt-2">{selectedFiles.length} image(s) selected</p>
+              )}
+
+              <small className="text-gray-500 block mt-1">
+                JPG, PNG — Max 5MB each.
+              </small>
             </div>
           </div>
-        </Card>
 
-        {/* Form Actions */}
-        <div className="">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? 'Submitting...' : (isEditMode ? 'Update Request' : 'Submit Request')}
-          </Button>
-        </div>
-      </form>
+          {/* ACTION BUTTONS */}
+          <div className="flex justify-end gap-4 mt-10">
+            <Button type="button" variant="outline" onClick={() => navigate("/maintenance")}>
+              Cancel
+            </Button>
+
+            <Button type="submit" disabled={loading}>
+              {loading ? "Submitting..." : isEditMode ? "Update Request" : "Submit Request"}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

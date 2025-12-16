@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { 
+import React, { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+
+import {
   BuildingOfficeIcon,
   HomeIcon,
   CurrencyDollarIcon,
@@ -11,8 +12,8 @@ import {
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
 const Navbar = () => {
   const { user, logout, isAuthenticated, isLandlord } = useAuth();
@@ -20,132 +21,146 @@ const Navbar = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  if (!isAuthenticated) return null;
+
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
-
-  if (!isAuthenticated) return null;
 
   const isActive = (path) => location.pathname === path;
 
   const navLinks = [
-    { path: '/dashboard', label: 'Dashboard', icon: HomeIcon, show: true },
-    { path: '/properties', label: 'Properties', icon: BuildingOfficeIcon, show: isLandlord },
-    { path: '/payments', label: 'Payments', icon: CurrencyDollarIcon, show: true },
-    { path: '/maintenance', label: isLandlord ? 'Maintenance' : 'Requests', icon: WrenchScrewdriverIcon, show: true },
-    { path: '/leases', label: isLandlord ? 'Leases' : 'Lease', icon: ClipboardDocumentCheckIcon, show: true },
-    { path: '/messages', label: 'Messages', icon: ChatBubbleLeftRightIcon, show: true },
+    { path: "/dashboard", label: "Dashboard", icon: HomeIcon, show: true },
+    { path: "/properties", label: "Properties", icon: BuildingOfficeIcon, show: isLandlord },
+    { path: "/payments", label: "Payments", icon: CurrencyDollarIcon, show: true },
+    { path: "/maintenance", label: isLandlord ? "Maintenance" : "Requests", icon: WrenchScrewdriverIcon, show: true },
+    { path: "/leases", label: isLandlord ? "Leases" : "Lease", icon: ClipboardDocumentCheckIcon, show: true },
+    { path: "/messages", label: "Messages", icon: ChatBubbleLeftRightIcon, show: true },
   ];
 
   return (
-    <nav className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-40">
+    <nav className="bg-black/40 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* MAIN BAR */}
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/dashboard" className="flex items-center space-x-2 group">
-            <BuildingOfficeIcon className="h-8 w-8 text-primary-600 group-hover:text-primary-700 transition-colors" />
-            <span className="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+
+          {/* LOGO */}
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <BuildingOfficeIcon className="h-8 w-8 text-[#D4AF37]" />
+            <span className="text-xl font-semibold text-white tracking-wide">
               PropertyHub
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
-            {navLinks.filter(link => link.show).map((link) => {
+          {/* DESKTOP NAV LINKS */}
+          <div className="hidden md:flex items-center gap-2">
+            {navLinks.filter((link) => link.show).map((link) => {
               const Icon = link.icon;
               const active = isActive(link.path);
+
               return (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                    active
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all 
+                    ${
+                      active
+                        ? "text-[#D4AF37] border-b-2 border-[#D4AF37]"
+                        : "text-gray-300 hover:text-white hover:bg-white/10"
+                    }`}
                 >
                   <Icon className="h-5 w-5" />
-                  <span>{link.label}</span>
+                  {link.label}
                 </Link>
               );
             })}
           </div>
 
-          {/* User Menu */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* USER PROFILE */}
+          <div className="hidden md:flex items-center gap-4">
             <Link
               to="/profile"
-              className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 transition"
             >
-              <div className="text-right">
-                <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+              <div className="text-right leading-tight">
+                <p className="text-sm font-medium text-white">{user.name}</p>
+                <p className="text-xs text-gray-400 capitalize">{user.role}</p>
               </div>
-              <UserCircleIcon className="h-9 w-9 text-gray-400" />
+              <UserCircleIcon className="h-9 w-9 text-gray-300" />
             </Link>
+
+            {/* LOGOUT BUTTON */}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition"
             >
               <ArrowRightOnRectangleIcon className="h-5 w-5" />
-              <span>Logout</span>
+              Logout
             </button>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* MOBILE MENU BUTTON */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="md:hidden p-2 rounded-lg hover:bg-white/10"
           >
             {mobileMenuOpen ? (
-              <XMarkIcon className="h-6 w-6 text-gray-700" />
+              <XMarkIcon className="h-6 w-6 text-white" />
             ) : (
-              <Bars3Icon className="h-6 w-6 text-gray-700" />
+              <Bars3Icon className="h-6 w-6 text-white" />
             )}
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* MOBILE MENU */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200 space-y-1">
-            {navLinks.filter(link => link.show).map((link) => {
+          <div className="md:hidden py-4 border-t border-white/10 space-y-1">
+
+            {navLinks.filter((l) => l.show).map((link) => {
               const Icon = link.icon;
               const active = isActive(link.path);
+
               return (
                 <Link
                   key={link.path}
                   to={link.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
-                    active
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition 
+                    ${
+                      active
+                        ? "bg-white/10 text-[#D4AF37]"
+                        : "text-gray-300 hover:bg-white/10 hover:text-white"
+                    }`}
                 >
                   <Icon className="h-5 w-5" />
-                  <span>{link.label}</span>
+                  {link.label}
                 </Link>
               );
             })}
+
             <Link
               to="/profile"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-all"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 transition"
             >
               <UserCircleIcon className="h-5 w-5" />
-              <span>Profile ({user.name})</span>
+              Profile ({user.name})
             </Link>
+
+            {/* MOBILE LOGOUT */}
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
                 handleLogout();
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 font-medium transition-all"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition"
             >
               <ArrowRightOnRectangleIcon className="h-5 w-5" />
-              <span>Logout</span>
+              Logout
             </button>
+
           </div>
         )}
       </div>

@@ -1,219 +1,217 @@
-import React from 'react';
-import homebg from '../assets/homebg.jpg';
-import { Link } from 'react-router-dom';
-import { 
-  BuildingOfficeIcon, 
-  ClipboardDocumentCheckIcon, 
+import React from "react";
+import { Link } from "react-router-dom";
+
+import {
+  BuildingOfficeIcon,
+  ClipboardDocumentCheckIcon,
   CurrencyDollarIcon,
   WrenchScrewdriverIcon,
   ChartBarIcon,
   UserGroupIcon,
   ShieldCheckIcon,
-  BellAlertIcon
-} from '@heroicons/react/24/outline';
+  BellAlertIcon,
+} from "@heroicons/react/24/outline";
+
+// Background image
+const bg2 = new URL("../bg.png", import.meta.url).href;
 
 const Home = () => {
   const features = [
     {
       icon: BuildingOfficeIcon,
-      title: 'Property Management',
-      description: 'Manage all your properties from one centralized dashboard with detailed insights.',
-      color: 'text-blue-600 bg-blue-50'
+      title: "Property Management",
+      description:
+        "Oversee and optimize all your properties from one elegant dashboard.",
     },
     {
       icon: UserGroupIcon,
-      title: 'Tenant Portal',
-      description: 'Allow tenants to pay rent, submit maintenance requests, and communicate easily.',
-      color: 'text-purple-600 bg-purple-50'
+      title: "Tenant Portal",
+      description:
+        "Allow tenants to pay rent, request maintenance, and communicate easily.",
     },
     {
       icon: CurrencyDollarIcon,
-      title: 'Payment Tracking',
-      description: 'Track rent payments, generate invoices, and manage financial records effortlessly.',
-      color: 'text-green-600 bg-green-50'
+      title: "Payment Tracking",
+      description:
+        "Track rent payments, generate invoices, and manage revenue seamlessly.",
     },
     {
       icon: WrenchScrewdriverIcon,
-      title: 'Maintenance Management',
-      description: 'Handle maintenance requests efficiently with automated workflows and tracking.',
-      color: 'text-orange-600 bg-orange-50'
+      title: "Maintenance Management",
+      description:
+        "Organize and respond to maintenance requests efficiently.",
     },
     {
       icon: ClipboardDocumentCheckIcon,
-      title: 'Lease Management',
-      description: 'Create, track, and manage lease agreements with e-signature support.',
-      color: 'text-indigo-600 bg-indigo-50'
+      title: "Lease Management",
+      description:
+        "Create, track, and manage leases with professional workflows.",
     },
     {
       icon: ChartBarIcon,
-      title: 'Analytics & Reports',
-      description: 'Get detailed insights and reports on occupancy, revenue, and expenses.',
-      color: 'text-pink-600 bg-pink-50'
+      title: "Analytics & Reports",
+      description:
+        "Get insights into occupancy, revenue trends, and asset performance.",
     },
     {
       icon: BellAlertIcon,
-      title: 'Smart Notifications',
-      description: 'Stay informed with automated alerts for payments, leases, and maintenance.',
-      color: 'text-red-600 bg-red-50'
+      title: "Smart Notifications",
+      description:
+        "Stay informed with automated reminders and alerts.",
     },
     {
       icon: ShieldCheckIcon,
-      title: 'Secure & Reliable',
-      description: 'Bank-level security with encrypted data and regular backups for peace of mind.',
-      color: 'text-teal-600 bg-teal-50'
-    }
+      title: "Secure & Reliable",
+      description:
+        "Enterprise-grade security with encrypted data and daily backups.",
+    },
   ];
 
   return (
-    // SINGLE top-level wrapper — this must be the only root element in the return
-    <div
-      className="min-h-screen bg-no-repeat bg-cover bg-center"
-      style={{
-        backgroundImage: `url(${homebg})`,
-        backgroundAttachment: "fixed",
-      }}
-    >
-      {/* Make page content relatively positioned above the background */}
-      <div className="relative z-10">
-        {/* Navigation */}
-        <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-2">
-                <BuildingOfficeIcon className="h-8 w-8 text-primary-600" />
-                <span className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
-                  PropertyHub
-                </span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Link 
-                  to="/login" 
-                  className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link 
-                  to="/register" 
-                  className="btn-primary"
-                >
-                  Get Started
-                </Link>
-              </div>
+    <div className="relative min-h-screen">
+
+      {/* Background Image */}
+      <div
+        className="fixed inset-0 bg-cover bg-center -z-20"
+        style={{
+          backgroundImage: `url(${bg2})`,
+          filter: "blur(2px) brightness(0.45)",
+          transform: "scale(1.08)",
+        }}
+      ></div>
+
+      {/* Soft Overlay */}
+      <div className="fixed inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 -z-10"></div>
+
+      {/* NAVIGATION */}
+      <nav className="bg-black/30 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex justify-between items-center h-16">
+
+            {/* Logo */}
+            <div className="flex items-center space-x-2">
+              <BuildingOfficeIcon className="h-8 w-8 text-[#D4AF37]" />
+              <span className="text-2xl font-semibold text-white tracking-wide">
+                PropertyHub
+              </span>
             </div>
+
+            {/* Nav Links */}
+            <div className="flex items-center space-x-4">
+              <Link to="/login" className="text-gray-200 hover:text-white">
+                Sign In
+              </Link>
+
+              <Link
+                to="/register"
+                className="px-5 py-2 rounded-xl bg-[#D4AF37] text-black font-medium hover:bg-[#c09b2f] transition"
+              >
+                Get Started
+              </Link>
+            </div>
+
           </div>
-        </nav>
-
-{/* hero section  */}
-        <section className="relative overflow-hidden pt-20 pb-32 px-4 sm:px-6 lg:px-8">
-  <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-transparent opacity-50"></div>
-  
-  <div className="max-w-7xl mx-auto relative">
-    <div className="text-center max-w-4xl mx-auto">
-      
-      <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
-        Modern Property Management
-        <span className="block text-primary-600 mt-2">Made Simple</span>
-      </h1>
-
-      <p className="text-xl text-black mb-10 max-w-3xl mx-auto leading-relaxed">
-        Streamline your rental property management with our all-in-one platform.
-        Track payments, manage leases, handle maintenance, and communicate with tenants effortlessly.
-      </p>
-
-      {/* Sign Up / Sign In Buttons */}
-      <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Link 
-          to="/register" 
-          className="inline-flex items-center justify-center px-6 py-2.5 text-base font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
-        >
-          Sign Up
-        </Link>
-
-        <Link 
-          to="/login" 
-          className="inline-flex items-center justify-center px-6 py-2.5 text-base font-semibold text-primary-700 bg-white hover:bg-gray-50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
-        >
-          Sign In
-        </Link>
-      </div>
-
-    </div> 
-    {/* CLOSE text-center wrapper */}
-
-    {/* Stats */}
-    {/* <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-      {[
-        { number: '500+', label: 'Properties Managed' },
-        { number: '2,000+', label: 'Active Tenants' },
-        { number: '99.9%', label: 'Uptime' },
-        { number: '$50M+', label: 'Rent Collected' }
-      ].map((stat, index) => (
-        <div key={index} className="text-center">
-          <div className="text-3xl font-bold text-primary-600">{stat.number}</div>
-          <div className="text-sm text-gray-600 mt-1">{stat.label}</div>
         </div>
-      ))}
-    </div> */}
+      </nav>
 
-  </div>
-</section>
+      {/* HERO SECTION - FULL SCREEN */}
+      <section className="h-screen flex flex-col justify-center items-center text-center text-white px-4">
 
-              
+        <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
+          <span className="text-white">Modern Property Management</span>
 
-        {/* Features Section */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Everything You Need to Manage Properties
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Powerful features designed specifically for landlords and property managers
-              </p>
-            </div>
+          <span className="block mt-2 text-[#D4AF37]">
+            Made Simple
+          </span>
+        </h1>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {features.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <div 
-                    key={index} 
-                    className="group p-6 rounded-2xl border border-gray-100 hover:border-primary-200 hover:shadow-xl transition-all duration-300 bg-white"
+        <p className="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto mb-10">
+          A modern all-in-one platform for managing rent, leases, tenants,
+          communication, and asset performance—all in one elegant interface.
+        </p>
+
+        {/* CALL TO ACTION BUTTONS */}
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <Link
+            to="/register"
+            className="px-7 py-3 rounded-xl text-lg font-medium 
+            bg-[#D4AF37] text-black hover:bg-[#c09b2f] transition"
+          >
+            Get Started
+          </Link>
+
+          <Link
+            to="/login"
+            className="px-7 py-3 rounded-xl text-lg font-medium 
+            bg-white/20 backdrop-blur-md border border-white/20 text-white
+            hover:bg-white/30 transition"
+          >
+            Sign In
+          </Link>
+        </div>
+
+      </section>
+
+      {/* FEATURES SECTION */}
+      <section className="py-20 px-6">
+        <div className="max-w-7xl mx-auto">
+
+          <h2 className="text-4xl font-semibold text-center mb-12 text-white">
+            Everything You Need, Built with Elegance
+          </h2>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
+            {features.map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={i}
+                  className="p-6 rounded-2xl bg-white/10 backdrop-blur-xl 
+                  border border-white/10 shadow-md hover:bg-white/20 transition"
+                >
+                  <div
+                    className="w-14 h-14 rounded-xl bg-[#D4AF37]/20 border border-[#D4AF37]/40
+                    flex items-center justify-center mb-4"
                   >
-                    <div className={`w-14 h-14 rounded-xl ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className="h-7 w-7" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      {feature.description}
-                    </p>
+                    <Icon className="h-7 w-7 text-[#D4AF37]" />
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-        
 
-        {/* Footer */}
-        <footer className="bg-gray-900 text-gray-300 py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto text-center">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <BuildingOfficeIcon className="h-6 w-6 text-primary-400" />
-              <span className="text-xl font-bold text-white">PropertyHub</span>
-            </div>
-            <p className="text-gray-400 mb-4">
-              Modern property management platform for landlords
-            </p>
-            <p className="text-sm text-gray-500">
-              © 2025 PropertyHub. All rights reserved.
-            </p>
+                  <h3 className="text-xl font-medium text-white mb-1">
+                    {f.title}
+                  </h3>
+
+                  <p className="text-gray-200 text-sm">{f.description}</p>
+                </div>
+              );
+            })}
           </div>
-        </footer>
-      </div> {/* end relative z-10 */}
-    </div> /* end background wrapper */
+
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="bg-black/40 backdrop-blur-xl text-gray-300 py-12 border-t border-white/10">
+        <div className="max-w-7xl mx-auto text-center">
+
+          <div className="flex justify-center items-center space-x-2 mb-4">
+            <BuildingOfficeIcon className="h-6 w-6 text-[#D4AF37]" />
+            <span className="text-xl font-semibold text-[#D4AF37]">
+              PropertyHub
+            </span>
+          </div>
+
+          <p className="text-gray-300 mb-1">
+            A refined experience for modern property management.
+          </p>
+
+          <p className="text-sm text-gray-400">
+            © 2025 PropertyHub. All rights reserved.
+          </p>
+
+        </div>
+      </footer>
+
+    </div>
   );
 };
 
