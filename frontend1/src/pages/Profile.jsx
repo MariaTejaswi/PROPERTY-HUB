@@ -13,9 +13,9 @@ const Profile = () => {
   const { user, setUser } = useAuth();
 
   const [formData, setFormData] = useState({
-    name: user.name || "",
-    email: user.email || "",
-    phone: user.phone || "",
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -40,13 +40,18 @@ const Profile = () => {
     setSuccess("");
     setLoading(true);
 
+    console.log('Submitting profile update:', formData);
+
     try {
       const response = await api.put("/auth/profile", formData);
+      console.log('Profile update response:', response.data);
       setUser(response.data.user);
       localStorage.setItem("user", JSON.stringify(response.data.user));
       setSuccess("Profile updated successfully!");
-    } catch {
-      setError("Failed to update profile");
+    } catch (err) {
+      console.error('Profile update error:', err);
+      console.error('Error response:', err.response);
+      setError(err.response?.data?.message || "Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -63,7 +68,7 @@ const Profile = () => {
     setLoading(true);
 
     try {
-      await api.put("/auth/change-password", {
+      await api.put("/auth/password", {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
@@ -74,8 +79,8 @@ const Profile = () => {
         newPassword: "",
         confirmPassword: "",
       });
-    } catch {
-      setError("Failed to change password");
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to change password");
     } finally {
       setLoading(false);
     }

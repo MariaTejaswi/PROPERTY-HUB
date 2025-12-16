@@ -130,12 +130,28 @@ exports.getMe = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const { name, phone, email } = req.body;
+    
+    console.log('Update profile request:', { name, phone, email });
+    console.log('Current user ID:', req.user?._id);
 
     const user = await User.findById(req.user._id);
 
+    if (!user) {
+      console.log('User not found for ID:', req.user._id);
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    console.log('Current user data:', { 
+      name: user.name, 
+      email: user.email, 
+      phone: user.phone 
+    });
+
     if (email && email !== user.email) {
-      const emailExists = await User.findOne({ email });
+      console.log('Email change detected:', user.email, '->', email);
+      const emailExists = await User.findOne({ email, _id: { $ne: user._id } });
       if (emailExists) {
+        console.log('Email already in use by another user');
         return res.status(400).json({ message: 'Email already in use' });
       }
       user.email = email;
@@ -145,7 +161,9 @@ exports.updateProfile = async (req, res) => {
     if (name) user.name = name;
     if (phone) user.phone = phone;
 
+    console.log('Saving updated user data...');
     await user.save();
+    console.log('User updated successfully');
 
     res.json({
       success: true,
@@ -159,6 +177,8 @@ exports.updateProfile = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Profile update error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({ message: error.message });
   }
 };
