@@ -97,7 +97,11 @@ const PropertyForm = () => {
 
     try {
       const fd = new FormData();
+      const skipKeys = new Set([
+        'landlord', '_id', '__v', 'createdAt', 'updatedAt', 'images', 'currentTenant', 'assignedManager'
+      ]);
       Object.entries(formData).forEach(([k, v]) => {
+        if (skipKeys.has(k)) return;
         if (k === "address") {
           Object.entries(v).forEach(([a, av]) =>
             fd.append(`address[${a}]`, av)
@@ -120,8 +124,9 @@ const PropertyForm = () => {
       }
 
       setTimeout(() => navigate("/properties"), 1200);
-    } catch {
-      setError("Failed to save property");
+    } catch (err) {
+      const msg = err?.response?.data?.message || "Failed to save property";
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -173,22 +178,23 @@ const PropertyForm = () => {
               </h3>
 
               <div className="grid md:grid-cols-2 gap-4">
-                {section.fields.map((field) => (
-                  <input
-                    key={field}
-                    name={field.startsWith("address") ? `address.${field}` : field}
-                    value={
-                      field in formData
-                        ? formData[field]
-                        : formData.address[field] || ""
-                    }
-                    onChange={handleChange}
-                    placeholder={field.replace(/([A-Z])/g, " $1")}
-                    className="bg-white/10 border border-white/20 text-white 
-                               rounded-lg px-4 py-3 focus:ring-2 
-                               focus:ring-[#D4AF37] outline-none"
-                  />
-                ))}
+                {section.fields.map((field) => {
+                  const isAddress = section.title === "Address";
+                  const name = isAddress ? `address.${field}` : field;
+                  const value = isAddress ? (formData.address?.[field] || "") : (formData[field] ?? "");
+                  return (
+                    <input
+                      key={name}
+                      name={name}
+                      value={value}
+                      onChange={handleChange}
+                      placeholder={field.replace(/([A-Z])/g, " $1")}
+                      className="bg-white/10 border border-white/20 text-white 
+                                 rounded-lg px-4 py-3 focus:ring-2 
+                                 focus:ring-[#D4AF37] outline-none"
+                    />
+                  );
+                })}
               </div>
             </div>
           ))}

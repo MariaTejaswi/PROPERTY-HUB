@@ -40,22 +40,24 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="bg-black/40 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50 shadow-sm">
+    <nav className="bg-black border-b border-white/10 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* MAIN BAR */}
-        <div className="flex justify-between items-center h-16">
+        <div className="relative flex items-center h-16">
 
-          {/* LOGO */}
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <BuildingOfficeIcon className="h-8 w-8 text-[#D4AF37]" />
-            <span className="text-xl font-semibold text-white tracking-wide">
-              PropertyHub
-            </span>
-          </Link>
+          {/* LEFT: BRAND (leftmost) */}
+          <div className="flex-1 pr-4 md:pr-8">
+            <Link to="/dashboard" className="flex items-center gap-2">
+              <BuildingOfficeIcon className="h-8 w-8 text-[#D4AF37]" />
+              <span className="text-xl font-semibold text-white tracking-wide">
+                PropertyHub
+              </span>
+            </Link>
+          </div>
 
-          {/* DESKTOP NAV LINKS */}
-          <div className="hidden md:flex items-center gap-2">
+          {/* CENTER: DESKTOP NAV LINKS */}
+          <div className="hidden md:flex flex-1 justify-center items-center gap-6 pl-4 md:pl-8">
             {navLinks.filter((link) => link.show).map((link) => {
               const Icon = link.icon;
               const active = isActive(link.path);
@@ -68,7 +70,7 @@ const Navbar = () => {
                     ${
                       active
                         ? "text-[#D4AF37] border-b-2 border-[#D4AF37]"
-                        : "text-gray-300 hover:text-white hover:bg-white/10"
+                        : "text-white hover:bg-white/10"
                     }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -78,8 +80,8 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* USER PROFILE */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* RIGHT: USER PROFILE + LOGOUT */}
+          <div className="hidden md:flex flex-1 justify-end items-center gap-4">
             <Link
               to="/profile"
               className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 transition"
@@ -104,7 +106,7 @@ const Navbar = () => {
           {/* MOBILE MENU BUTTON */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-white/10"
+            className="md:hidden p-2 rounded-lg hover:bg-white/10 absolute right-2"
           >
             {mobileMenuOpen ? (
               <XMarkIcon className="h-6 w-6 text-white" />
@@ -131,7 +133,7 @@ const Navbar = () => {
                     ${
                       active
                         ? "bg-white/10 text-[#D4AF37]"
-                        : "text-gray-300 hover:bg-white/10 hover:text-white"
+                        : "text-white hover:bg-white/10"
                     }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -143,7 +145,7 @@ const Navbar = () => {
             <Link
               to="/profile"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 transition"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/10 transition"
             >
               <UserCircleIcon className="h-5 w-5" />
               Profile ({user.name})

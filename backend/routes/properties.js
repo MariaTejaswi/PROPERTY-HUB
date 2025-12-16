@@ -37,11 +37,27 @@ router.get('/', getProperties);
 // Get single property (all roles)
 router.get('/:id', getProperty);
 
+// Normalize multipart bracket fields to nested objects for validation
+const normalizeMultipart = (req, _res, next) => {
+  if (req.body) {
+    const addr = {};
+    for (const [k, v] of Object.entries(req.body)) {
+      const m = k.match(/^address\[(.+)\]$/);
+      if (m) addr[m[1]] = v;
+    }
+    if (Object.keys(addr).length) {
+      req.body.address = { ...(req.body.address || {}), ...addr };
+    }
+  }
+  next();
+};
+
 // Create property (landlord only)
 router.post(
   '/',
   authorize('landlord'),
   upload.array('images', 10),
+  normalizeMultipart,
   propertyValidation,
   validateRequest,
   createProperty

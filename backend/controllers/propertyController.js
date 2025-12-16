@@ -85,17 +85,64 @@ exports.getProperty = async (req, res) => {
 // @access  Private (Landlord only)
 exports.createProperty = async (req, res) => {
   try {
-    const propertyData = {
-      ...req.body,
-      landlord: req.user._id
-    };
-    
+    // Normalize multipart fields similar to update
+    const raw = req.body || {};
+    const data = { landlord: req.user._id };
+    const address = {};
+    const amenitiesMap = new Map();
+
+    for (const [key, value] of Object.entries(raw)) {
+      // Never allow overriding landlord from client payload
+      if (key === 'landlord') continue;
+      const addrMatch = key.match(/^address\[(.+)\]$/);
+      const amenityMatch = key.match(/^amenities\[(\d+)\]$/);
+      if (addrMatch) {
+        address[addrMatch[1]] = value;
+      } else if (amenityMatch) {
+        amenitiesMap.set(parseInt(amenityMatch[1], 10), value);
+      } else if (key === 'address' && typeof value === 'string') {
+        try { Object.assign(address, JSON.parse(value)); } catch {}
+      } else if (key === 'amenities') {
+        try {
+          const arr = typeof value === 'string' ? JSON.parse(value) : value;
+          if (Array.isArray(arr)) arr.forEach((v, i) => amenitiesMap.set(i, v));
+        } catch {
+          amenitiesMap.set(0, value);
+        }
+      } else {
+        data[key] = value;
+      }
+    }
+
+    if (Object.keys(address).length) {
+      data.address = address;
+    }
+    if (amenitiesMap.size) {
+      data.amenities = Array.from(amenitiesMap.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([, v]) => v)
+        .filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+    }
+
+    ['bedrooms','bathrooms','squareFeet','yearBuilt','rentAmount','depositAmount']
+      .forEach((f) => {
+        if (data[f] !== undefined && data[f] !== '') {
+          data[f] = Number(data[f]);
+        }
+      });
+
+    if (data.isAvailable !== undefined) {
+      if (typeof data.isAvailable === 'string') {
+        data.isAvailable = data.isAvailable === 'true';
+      }
+    }
+
     // Handle uploaded images
     if (req.files && req.files.length > 0) {
-      propertyData.images = req.files.map(file => file.path);
+      data.images = req.files.map(file => file.path);
     }
-    
-    const property = await Property.create(propertyData);
+
+    const property = await Property.create(data);
     
     res.status(201).json(property);
   } catch (error) {
@@ -119,15 +166,68 @@ exports.updateProperty = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this property' });
     }
     
+    // Normalize multipart FormData fields (address[street], amenities[0], etc.)
+    const raw = req.body || {};
+    const updateData = {};
+    const address = {};
+    const amenitiesMap = new Map();
+
+    for (const [key, value] of Object.entries(raw)) {
+      // Never allow overriding landlord from client payload
+      if (key === 'landlord') continue;
+      const addrMatch = key.match(/^address\[(.+)\]$/);
+      const amenityMatch = key.match(/^amenities\[(\d+)\]$/);
+      if (addrMatch) {
+        address[addrMatch[1]] = value;
+      } else if (amenityMatch) {
+        amenitiesMap.set(parseInt(amenityMatch[1], 10), value);
+      } else if (key === 'address' && typeof value === 'string') {
+        try { Object.assign(address, JSON.parse(value)); } catch {}
+      } else if (key === 'amenities') {
+        try {
+          const arr = typeof value === 'string' ? JSON.parse(value) : value;
+          if (Array.isArray(arr)) arr.forEach((v, i) => amenitiesMap.set(i, v));
+        } catch {
+          // Single string amenity fallback
+          amenitiesMap.set(0, value);
+        }
+      } else {
+        updateData[key] = value;
+      }
+    }
+
+    if (Object.keys(address).length) {
+      updateData.address = address;
+    }
+    if (amenitiesMap.size) {
+      updateData.amenities = Array.from(amenitiesMap.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([, v]) => v)
+        .filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+    }
+
+    // Coerce numeric/boolean fields
+    ['bedrooms','bathrooms','squareFeet','yearBuilt','rentAmount','depositAmount']
+      .forEach((f) => {
+        if (updateData[f] !== undefined) {
+          updateData[f] = Number(updateData[f]);
+        }
+      });
+    if (updateData.isAvailable !== undefined) {
+      if (typeof updateData.isAvailable === 'string') {
+        updateData.isAvailable = updateData.isAvailable === 'true';
+      }
+    }
+
     // Handle new images
     if (req.files && req.files.length > 0) {
       const newImages = req.files.map(file => file.path);
-      req.body.images = [...(property.images || []), ...newImages];
+      updateData.images = [...(property.images || []), ...newImages];
     }
-    
+
     property = await Property.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     ).populate('landlord currentTenant assignedManager', 'name email phone');
     

@@ -338,10 +338,35 @@ exports.getReceipt = async (req, res) => {
       await payment.save();
     }
     
-    // Convert URL path to file system path
+    // Convert URL path to file system path (handle leading slash safely)
     const path = require('path');
-    const filePath = path.join(__dirname, '..', payment.receiptUrl);
-    
+    const fs = require('fs');
+    const relativeUrl = payment.receiptUrl.replace(/^\/+/, '');
+    let filePath = path.join(__dirname, '..', relativeUrl);
+
+    // If file missing but receiptUrl set, attempt regeneration once
+    if (!fs.existsSync(filePath)) {
+      // Ensure receipt number exists
+      if (!payment.receiptNumber) {
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        payment.receiptNumber = `RCP-${year}${month}-${random}`;
+        await payment.save();
+      }
+      const regeneratedPath = await generatePaymentReceipt(
+        payment,
+        payment.tenant,
+        payment.landlord,
+        payment.property
+      );
+      payment.receiptUrl = regeneratedPath;
+      await payment.save();
+      const regeneratedRelative = regeneratedPath.replace(/^\/+/, '');
+      filePath = path.join(__dirname, '..', regeneratedRelative);
+    }
+
     // Send file
     res.download(filePath);
   } catch (error) {
