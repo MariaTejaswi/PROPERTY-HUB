@@ -6,6 +6,8 @@ const User = require('../models/User');
 // @access  Private
 exports.getProperties = async (req, res) => {
   try {
+    console.log('GET /api/properties - User:', req.user?._id, 'Role:', req.user?.role);
+    
     let query = {};
     
     // Filter based on user role
@@ -34,11 +36,15 @@ exports.getProperties = async (req, res) => {
       ];
     }
     
+    console.log('Property query:', JSON.stringify(query));
+    
     const properties = await Property.find(query)
       .populate('landlord', 'name email phone')
       .populate('currentTenant', 'name email phone')
       .populate('assignedManager', 'name email phone')
       .sort({ createdAt: -1 });
+    
+    console.log('Properties found:', properties.length);
     
     res.json({
       success: true,
@@ -46,6 +52,8 @@ exports.getProperties = async (req, res) => {
       properties
     });
   } catch (error) {
+    console.error('Get properties error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({ message: error.message });
   }
 };
