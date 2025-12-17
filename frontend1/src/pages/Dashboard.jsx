@@ -117,7 +117,7 @@ const Dashboard = () => {
         {/* HEADER */}
         <div className="text-center">
           <h1 className="text-4xl font-bold text-white">
-            Welcome back,{" "}
+            Welcome {" "}
             <span className="text-[#D4AF37]">{user.name}</span> 👋
           </h1>
           <p className="text-gray-200 mt-2 text-lg">
@@ -195,24 +195,24 @@ const Dashboard = () => {
         {recentActivity.length > 0 && (
           <Card
             title="Recent Activity"
-            className="bg-black/40 border border-white/10 text-white"
+            className="bg-black border border-[#D4AF37] text-white shadow-xl"
           >
             <div className="space-y-4">
               {recentActivity.map((activity, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-4 p-5 bg-black/30 rounded-xl 
-                  border border-white/10 shadow-sm hover:bg-black/40 transition"
+                  className="flex items-start gap-4 p-5 bg-black rounded-xl 
+                  border border-[#D4AF37]/40 shadow-sm hover:border-[#D4AF37] hover:bg-black transition"
                 >
-                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-neutral-800 flex items-center justify-center text-xl">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#D4AF37] flex items-center justify-center text-xl text-black ring-1 ring-[#D4AF37]/60">
                     {activity.type === "payment" ? "💳" : "🔧"}
                   </div>
 
                   <div className="flex-1">
-                    <p className="font-medium text-gray-100">
+                    <p className="font-medium text-white">
                       {activity.description}
                     </p>
-                    <p className="text-xs text-gray-300 mt-1">
+                    <p className="text-xs text-[#D4AF37] mt-1">
                       {new Date(activity.date).toLocaleDateString()}
                     </p>
                   </div>
