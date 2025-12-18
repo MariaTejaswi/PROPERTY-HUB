@@ -5,6 +5,7 @@ import api from "../services/api";
 import Loader from "../components/common/Loader";
 import Alert from "../components/common/Alert";
 import DemoPaymentGateway from "../components/payments/DemoPaymentGateway";
+import AddPaymentModal from "../components/payments/AddPaymentModal";
 import { formatCurrency, formatDate } from "../utils/formatters";
 
 const Payments = () => {
@@ -16,7 +17,23 @@ const Payments = () => {
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  
   const [selectedPayment, setSelectedPayment] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  // Auto-dismiss success message after 2 seconds
+  useEffect(() => {
+    if (!success) return;
+    const t = setTimeout(() => setSuccess(""), 2000);
+    return () => clearTimeout(t);
+  }, [success]);
+
+  // Auto-dismiss error message after 2 seconds
+  useEffect(() => {
+    if (!error) return;
+    const t = setTimeout(() => setError(""), 2000);
+    return () => clearTimeout(t);
+  }, [error]);
 
   useEffect(() => {
     fetchPayments();
@@ -35,7 +52,46 @@ const Payments = () => {
   };
 
   const handleDownloadReceipt = async (id) => {
-    alert("Downloading receipt...");
+    try {
+      const res = await api.get(`/payments/${id}/receipt`, { responseType: "blob" });
+
+      const contentDisposition = res.headers["content-disposition"] || "";
+      let filename = "payment-receipt.pdf";
+      const match = contentDisposition.match(/filename[^;=\n]*=((['"])?.*?\2|[^;\n]*)/i);
+      if (match && match[1]) {
+        filename = match[1].replace(/['"]/g, "");
+      }
+
+      const blob = new Blob([res.data], { type: res.headers["content-type"] || "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      setSuccess("Receipt download started");
+    } catch (e) {
+      let message = "Failed to download receipt";
+      const resp = e.response;
+      if (resp?.data instanceof Blob) {
+        try {
+          const text = await resp.data.text();
+          try {
+            const json = JSON.parse(text);
+            message = json.message || message;
+          } catch {
+            message = text || message;
+          }
+        } catch {}
+      } else if (typeof resp?.data === "string") {
+        message = resp.data;
+      } else if (resp?.data?.message) {
+        message = resp.data.message;
+      }
+      setError(message);
+    }
   };
 
   const isOverdue = (p) =>
@@ -55,6 +111,14 @@ const Payments = () => {
               Track and manage rent payments
             </p>
           </div>
+          {isLandlord && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="rounded-xl border border-[#D4AF37] px-5 py-3 font-semibold text-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.35)] transition hover:bg-[#D4AF37] hover:text-black"
+            >
+              + Add Payment
+            </button>
+          )}
         </div>
 
         {error && <Alert type="error" message={error} />}
@@ -185,6 +249,19 @@ const Payments = () => {
               />
             </div>
           </div>
+        )}
+
+        {/* ADD PAYMENT MODAL */}
+        {showAddModal && isLandlord && (
+          <AddPaymentModal
+            onClose={() => setShowAddModal(false)}
+            onCreated={() => {
+              setSuccess("Payment created successfully");
+              setShowAddModal(false);
+              setLoading(true);
+              fetchPayments();
+            }}
+          />
         )}
       </div>
     </div>
