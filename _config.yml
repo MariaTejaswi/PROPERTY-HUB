@@ -1,0 +1,9 @@
+# Safety net: if GitHub Pages/Jekyll runs against the repo root,
+# don't crawl app source or dependencies.
+exclude:
+  - backend
+  - frontend1
+  - node_modules
+  - "**/node_modules"
+  - "**/dist"
+  - "**/.env"
