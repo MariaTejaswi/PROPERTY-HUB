@@ -10,11 +10,20 @@ import { HomeIcon } from "@heroicons/react/24/outline";
 const PropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isLandlord } = useAuth();
+  const { isLandlord, isTenant } = useAuth();
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [buying, setBuying] = useState(false);
+
+  const [showAssignTenant, setShowAssignTenant] = useState(false);
+  const [tenantOptions, setTenantOptions] = useState([]);
+  const [tenantLoading, setTenantLoading] = useState(false);
+  const [tenantId, setTenantId] = useState("");
+  const [assigningTenant, setAssigningTenant] = useState(false);
+  const [assignTenantError, setAssignTenantError] = useState("");
 
   useEffect(() => {
     fetchProperty();
@@ -31,6 +40,42 @@ const PropertyDetails = () => {
     }
   };
 
+  const openAssignTenant = async () => {
+    setAssignTenantError("");
+    setTenantId(property?.currentTenant?._id || "");
+    setShowAssignTenant(true);
+    setTenantLoading(true);
+    try {
+      const res = await api.get('/auth/users', { params: { role: 'tenant' } });
+      setTenantOptions(res.data.users || []);
+    } catch (err) {
+      setAssignTenantError(err.response?.data?.message || 'Failed to load tenants');
+    } finally {
+      setTenantLoading(false);
+    }
+  };
+
+  const submitAssignTenant = async (e) => {
+    e.preventDefault();
+    if (!tenantId) {
+      setAssignTenantError('Please select a tenant');
+      return;
+    }
+    setAssignTenantError('');
+    setAssigningTenant(true);
+    try {
+      const res = await api.put(`/properties/${id}/tenant`, { tenantId });
+      const updated = res.data.property || res.data;
+      setProperty(updated);
+      setSuccess('Tenant assigned successfully');
+      setShowAssignTenant(false);
+    } catch (err) {
+      setAssignTenantError(err.response?.data?.message || 'Failed to assign tenant');
+    } finally {
+      setAssigningTenant(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this property?")) return;
     try {
@@ -38,6 +83,40 @@ const PropertyDetails = () => {
       navigate("/properties");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete property");
+    }
+  };
+
+  const handleBuy = async () => {
+    if (!property?._id) return;
+    const landlordId = property?.landlord?._id || property?.landlord;
+    if (!landlordId) {
+      setError('This property has no landlord assigned.');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setBuying(true);
+    try {
+      const formData = new FormData();
+      formData.append('recipientIds', JSON.stringify([landlordId]));
+      formData.append('subject', 'Property purchase inquiry');
+      formData.append(
+        'content',
+        `Hi, I'm interested in buying this property: ${property.name}. Please contact me with next steps.`
+      );
+      formData.append('relatedTo', 'property');
+      formData.append('propertyId', property._id);
+
+      await api.post('/messages', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setSuccess('Sent to landlord. Check Messages for replies.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to contact landlord');
+    } finally {
+      setBuying(false);
     }
   };
 
@@ -69,6 +148,13 @@ const PropertyDetails = () => {
     <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black py-10 px-6">
       <div className="max-w-7xl mx-auto">
 
+        {(error || success) && (
+          <div className="mb-6 space-y-3">
+            {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+            {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
+          </div>
+        )}
+
         {/* HEADER */}
         <div className="flex justify-between items-center mb-10">
           <button
@@ -78,20 +164,40 @@ const PropertyDetails = () => {
             ← Back to Properties
           </button>
 
-          {isLandlord && (
+          {(isLandlord || isTenant) && (
             <div className="flex gap-3">
-              <button
-                onClick={() => navigate(`/properties/${id}/edit`)}
-                className="px-5 py-2.5 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#e5c56a]"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-5 py-2.5 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
-              >
-                Delete
-              </button>
+              {isTenant && (
+                <button
+                  onClick={handleBuy}
+                  disabled={buying}
+                  className="px-5 py-2.5 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#e5c56a] disabled:opacity-60"
+                >
+                  {buying ? 'Sending…' : 'Message'}
+                </button>
+              )}
+
+              {isLandlord && (
+                <>
+                  <button
+                    onClick={openAssignTenant}
+                    className="px-5 py-2.5 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20"
+                  >
+                    Assign Tenant
+                  </button>
+                  <button
+                    onClick={() => navigate(`/properties/${id}/edit`)}
+                    className="px-5 py-2.5 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#e5c56a]"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="px-5 py-2.5 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -205,6 +311,63 @@ const PropertyDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* ASSIGN TENANT MODAL (LANDLORD ONLY) */}
+      {showAssignTenant && isLandlord && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-black/90 p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">Assign Tenant</h2>
+              <button
+                onClick={() => setShowAssignTenant(false)}
+                className="rounded-lg border border-white/20 px-3 py-1 text-sm text-gray-200 hover:bg-white/10"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {assignTenantError && (
+                <Alert type="error" message={assignTenantError} onClose={() => setAssignTenantError('')} />
+              )}
+
+              {tenantLoading ? (
+                <div className="text-gray-300">Loading tenants…</div>
+              ) : (
+                <form onSubmit={submitAssignTenant} className="space-y-4">
+                  <div>
+                    <label className="mb-1 block text-sm text-gray-300">Tenant</label>
+                    <select
+                      value={tenantId}
+                      onChange={(e) => setTenantId(e.target.value)}
+                      className="w-full rounded-lg border border-white/20 bg-black/40 p-3 text-white focus:border-[#D4AF37] focus:outline-none"
+                      required
+                    >
+                      <option value="">Select tenant</option>
+                      {tenantOptions.map((t) => (
+                        <option key={t._id} value={t._id}>
+                          {t.name} ({t.email})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Assigning a tenant marks the property as occupied.
+                    </p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={assigningTenant}
+                    className="w-full rounded-xl bg-[#D4AF37] py-3 font-semibold text-black hover:bg-[#e5c56a] disabled:opacity-60"
+                  >
+                    {assigningTenant ? 'Assigning…' : 'Assign'}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

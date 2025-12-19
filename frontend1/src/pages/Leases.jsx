@@ -1,26 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import Loader from '../components/common/Loader';
 import Alert from '../components/common/Alert';
-import SignaturePad from '../components/leases/SignaturePad';
 import { formatCurrency, formatDate } from '../utils/formatters';
 
 const Leases = () => {
   const { user, isLandlord, isTenant } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [leases, setLeases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [signingLease, setSigningLease] = useState(null);
+  const [signatureFile, setSignatureFile] = useState(null);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     fetchLeases();
   }, [filter]);
+
+  useEffect(() => {
+    if (location.state?.leaseCreatedAt) {
+      fetchLeases();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.leaseCreatedAt]);
 
   const fetchLeases = async () => {
     try {
@@ -34,15 +42,48 @@ const Leases = () => {
     }
   };
 
-  const handleSign = async (signatureData) => {
+  const handleSign = async () => {
     try {
-      const role = isLandlord ? 'landlord' : 'tenant';
-      await api.post(`/leases/${signingLease._id}/sign`, { signatureData, role });
+      if (!signingLease?._id) return;
+      if (!signatureFile) {
+        setError('Please upload your signature image');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('signature', signatureFile);
+      await api.post(`/leases/${signingLease._id}/sign`, formData);
+
       setSuccess('Lease signed successfully');
       setSigningLease(null);
+      setSignatureFile(null);
       fetchLeases();
     } catch {
       setError('Failed to sign lease');
+    }
+  };
+
+  const downloadLeasePdf = async (lease) => {
+    try {
+      const response = await api.get(`/leases/${lease._id}/document`, {
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+
+      const safeName = (lease?.property?.name || 'lease')
+        .toString()
+        .replace(/[^a-z0-9_-]+/gi, '-');
+
+      link.href = url;
+      link.setAttribute('download', `lease-${safeName}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setError('Failed to download PDF');
     }
   };
 
@@ -65,11 +106,22 @@ const Leases = () => {
       <div className="max-w-7xl mx-auto">
 
         {/* HEADER */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold">Lease Agreements</h1>
-          <p className="text-gray-400 mt-1">
-            {isLandlord ? 'Manage your lease agreements' : 'Your lease agreements'}
-          </p>
+        <div className="mb-10 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold">Lease Agreements</h1>
+            <p className="text-gray-400 mt-1">
+              {isLandlord ? 'Manage your lease agreements' : 'Your lease agreements'}
+            </p>
+          </div>
+
+          {(isLandlord || isTenant) && (
+            <button
+              className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#e2c875] text-black font-semibold rounded-lg shadow-lg transition"
+              onClick={() => navigate('/leases/new', { state: { backgroundLocation: location } })}
+            >
+              + Create Lease
+            </button>
+          )}
         </div>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -173,13 +225,6 @@ const Leases = () => {
 
                 {/* ACTIONS */}
                 <div className="flex flex-wrap gap-3">
-                  <button
-                    className="btn-outline"
-                    onClick={() => navigate(`/leases/${lease._id}`)}
-                  >
-                    View Details
-                  </button>
-
                   {canSign(lease) && (
                     <button
                       className="btn-gold"
@@ -189,7 +234,7 @@ const Leases = () => {
                     </button>
                   )}
 
-                  {isFullySigned(lease) && lease.pdfUrl && (
+                  {isFullySigned(lease) && (
                     <button
                       className="
                         px-6 py-2.5 rounded-xl
@@ -199,9 +244,7 @@ const Leases = () => {
                         hover:text-black
                         transition
                       "
-                      onClick={() =>
-                        window.open(`http://localhost:5000${lease.pdfUrl}`, '_blank')
-                      }
+                      onClick={() => downloadLeasePdf(lease)}
                     >
                       ⬇ Download PDF
                     </button>
@@ -222,8 +265,35 @@ const Leases = () => {
               className="lux-card max-w-2xl w-full"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-3xl font-bold mb-6">Sign Lease</h2>
-              <SignaturePad onSave={handleSign} />
+              <h2 className="text-3xl font-bold mb-2 text-[#D4AF37]">Upload Signature</h2>
+              <p className="text-gray-400 mb-6">
+                Upload an image of your signature (PNG or JPG).
+              </p>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setSignatureFile(e.target.files?.[0] || null)}
+                className="text-gray-300"
+              />
+
+              <div className="flex justify-end gap-3 mt-8">
+                <button
+                  className="btn-outline"
+                  onClick={() => {
+                    setSigningLease(null);
+                    setSignatureFile(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn-gold"
+                  onClick={handleSign}
+                >
+                  Submit Signature
+                </button>
+              </div>
             </div>
           </div>
         )}

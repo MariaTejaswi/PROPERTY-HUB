@@ -21,8 +21,11 @@ const Messages = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewFiles, setPreviewFiles] = useState([]);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const pollingInterval = useRef(null);
   const fileInputRef = useRef(null);
+  const shouldAutoScrollRef = useRef(false);
+  const isAtBottomRef = useRef(true);
 
   // ---------------- FETCH CONVERSATIONS ----------------
   const fetchConversations = useCallback(async () => {
@@ -87,6 +90,8 @@ const Messages = () => {
   // Poll messages while a user is selected
   useEffect(() => {
     if (selectedUser) {
+      // When opening a conversation, jump to bottom once.
+      shouldAutoScrollRef.current = true;
       fetchMessages(selectedUser._id);
 
       pollingInterval.current = setInterval(() => {
@@ -97,9 +102,37 @@ const Messages = () => {
     }
   }, [selectedUser, fetchMessages]);
 
-  // Scroll to bottom on new messages
+  // Track whether the user is near the bottom of the message list.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesContainerRef.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      // Consider "at bottom" if within 80px.
+      const thresholdPx = 80;
+      const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight);
+      isAtBottomRef.current = distanceFromBottom <= thresholdPx;
+    };
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [selectedUser]);
+
+  // Only auto-scroll when user is already at bottom, or after an intentional action.
+  useEffect(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+
+    const shouldScroll = shouldAutoScrollRef.current || isAtBottomRef.current;
+    if (!shouldScroll) return;
+
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior: shouldAutoScrollRef.current ? 'smooth' : 'auto',
+    });
+
+    shouldAutoScrollRef.current = false;
   }, [messages]);
 
   // ---------------- SEND MESSAGE ----------------
@@ -113,6 +146,8 @@ const Messages = () => {
 
     setSending(true);
     try {
+      // User intentionally sent a message; scroll to bottom after it appears.
+      shouldAutoScrollRef.current = true;
       const formData = new FormData();
       formData.append('recipientIds', JSON.stringify([selectedUser._id]));
       if (newMessage.trim()) formData.append('content', newMessage);
@@ -180,7 +215,7 @@ const Messages = () => {
   if (loading) return <Loader fullScreen />;
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-black text-white flex">
+    <div className="h-[calc(100vh-4rem)] w-full overflow-hidden bg-black text-white flex">
       {/* ---------------- LEFT SIDEBAR ---------------- */}
       <div className="w-80 bg-[#0f0f0f] border-r border-gray-800 flex flex-col h-full overflow-hidden">
         <div className="p-4 border-b border-gray-800 flex justify-between items-center">
@@ -236,7 +271,10 @@ const Messages = () => {
             </div>
 
             {/* Messages List */}
-            <div className="flex-1 overflow-y-auto custom-scroll p-4 space-y-4">
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 overflow-y-auto custom-scroll p-4 space-y-4"
+            >
               {messages.map(msg => {
                 const isOwn = msg.sender._id === user.id;
 

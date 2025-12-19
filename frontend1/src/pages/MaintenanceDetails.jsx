@@ -110,7 +110,7 @@ const MaintenanceDetails = () => {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case "emergency":
+      case "urgent":
         return "#EF4444";
       case "high":
         return "#F59E0B";
@@ -125,13 +125,13 @@ const MaintenanceDetails = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "completed":
+      case "resolved":
         return "#10B981";
       case "in_progress":
         return "#6366F1";
-      case "pending":
+      case "open":
         return "#F59E0B";
-      case "cancelled":
+      case "closed":
         return "#EF4444";
       default:
         return "#6B7280";
@@ -153,22 +153,22 @@ const MaintenanceDetails = () => {
               </Button>
 
               {/* landlord actions */}
-              {isLandlord && request.status !== "completed" && request.status !== "cancelled" && (
+              {isLandlord && request.status !== "resolved" && request.status !== "closed" && (
                 <>
-                  {request.status === "pending" && (
+                  {request.status === "open" && (
                     <Button onClick={() => handleStatusChange("in_progress")}>Start Work</Button>
                   )}
                   {request.status === "in_progress" && (
-                    <Button onClick={() => handleStatusChange("completed")}>Mark Complete</Button>
+                    <Button onClick={() => handleStatusChange("resolved")}>Mark Complete</Button>
                   )}
-                  <Button variant="danger" onClick={() => handleStatusChange("cancelled")}>
+                  <Button variant="danger" onClick={() => handleStatusChange("closed")}>
                     Cancel Request
                   </Button>
                 </>
               )}
 
               {/* tenant actions */}
-              {request.tenant?._id === user._id && request.status === "pending" && (
+              {request.tenant?._id === user._id && request.status === "open" && (
                 <>
                   <Button variant="secondary" onClick={() => navigate(`/maintenance/${id}/edit`)}>
                     Edit Request

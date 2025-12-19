@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -29,6 +29,13 @@ const ProtectedRoute = ({ children }) => {
   return user ? children : <Navigate to="/login" replace />;
 };
 
+// Landlord-only Route Component
+const LandlordOnlyRoute = ({ children }) => {
+  const { user, isLandlord } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return isLandlord ? children : <Navigate to="/properties" replace />;
+};
+
 // Public Route Component
 const PublicRoute = ({ children }) => {
   const { user } = useAuth();
@@ -38,6 +45,42 @@ const PublicRoute = ({ children }) => {
 function AppRoutes() {
   const { user } = useAuth();
   const location = useLocation();
+  const state = location.state;
+  const backgroundLocation = state?.backgroundLocation;
+
+  const LeaseCreateModal = () => {
+    const navigate = useNavigate();
+    return (
+      <div
+        className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4"
+        onClick={() => navigate(-1)}
+      >
+        <div
+          className="lux-card w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <LeaseForm isModal />
+        </div>
+      </div>
+    );
+  };
+
+  const MaintenanceCreateModal = () => {
+    const navigate = useNavigate();
+    return (
+      <div
+        className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4"
+        onClick={() => navigate(-1)}
+      >
+        <div
+          className="lux-card w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MaintenanceForm isModal />
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -45,8 +88,8 @@ function AppRoutes() {
       {/* FIXED NAVBAR: show only when logged in AND not on home page */}
       {location.pathname !== "/" && user && <Navbar />}
 
-      <main className="flex-grow">
-        <Routes>
+      <main className={`flex-grow ${location.pathname === "/messages" ? "overflow-hidden" : ""}`}>
+        <Routes location={backgroundLocation || location}>
 
           {/* Public */}
           <Route path="/" element={<Home />} />
@@ -58,9 +101,9 @@ function AppRoutes() {
 
           {/* Properties */}
           <Route path="/properties" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
-          <Route path="/properties/new" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} />
+          <Route path="/properties/new" element={<LandlordOnlyRoute><PropertyForm /></LandlordOnlyRoute>} />
           <Route path="/properties/:id" element={<ProtectedRoute><PropertyDetails /></ProtectedRoute>} />
-          <Route path="/properties/:id/edit" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} />
+          <Route path="/properties/:id/edit" element={<LandlordOnlyRoute><PropertyForm /></LandlordOnlyRoute>} />
 
           {/* Leases */}
           <Route path="/leases" element={<ProtectedRoute><Leases /></ProtectedRoute>} />
@@ -70,10 +113,10 @@ function AppRoutes() {
 
           {/* Payments */}
           <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
-          <Route path="/payments/new" element={<ProtectedRoute><PaymentForm /></ProtectedRoute>} />
+          <Route path="/payments/new" element={<LandlordOnlyRoute><PaymentForm /></LandlordOnlyRoute>} />
 
           {/* ⭐ FIXED: EDIT PAYMENT ROUTE — THIS WAS MISSING ⭐ */}
-          <Route path="/payments/:id/edit" element={<ProtectedRoute><PaymentForm /></ProtectedRoute>} />
+          <Route path="/payments/:id/edit" element={<LandlordOnlyRoute><PaymentForm /></LandlordOnlyRoute>} />
 
           {/* Maintenance */}
           <Route path="/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
@@ -91,10 +134,17 @@ function AppRoutes() {
           <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
+
+        {backgroundLocation && (
+          <Routes>
+            <Route path="/leases/new" element={<ProtectedRoute><LeaseCreateModal /></ProtectedRoute>} />
+            <Route path="/maintenance/new" element={<ProtectedRoute><MaintenanceCreateModal /></ProtectedRoute>} />
+          </Routes>
+        )}
       </main>
 
       {/* Footer only for logged-in users */}
-      {user && <Footer />}
+      {user && location.pathname !== "/messages" && <Footer />}
     </div>
   );
 }

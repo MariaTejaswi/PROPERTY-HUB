@@ -1,6 +1,8 @@
 const Lease = require('../models/Lease');
 const Property = require('../models/Property');
 const User = require('../models/User');
+const fs = require('fs');
+const path = require('path');
 const { sendLeaseExpiryReminder } = require('../utils/emailService');
 const { generateLeaseDocument } = require('../utils/pdfGenerator');
 
@@ -87,17 +89,37 @@ exports.createLease = async (req, res) => {
       paymentDueDay,
       terms
     } = req.body;
-    
-    // Verify property belongs to landlord
+
     const property = await Property.findById(propertyId);
-    if (!property || property.landlord.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' });
     }
-    
-    // Verify tenant
-    const tenant = await User.findById(tenantId);
-    if (!tenant || tenant.role !== 'tenant') {
-      return res.status(400).json({ message: 'Invalid tenant' });
+
+    let resolvedLandlordId;
+    let resolvedTenantId;
+
+    if (req.user.role === 'tenant') {
+      // Tenants can only create a lease for a property they are assigned to.
+      if (!property.currentTenant || property.currentTenant.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
+
+      resolvedTenantId = req.user._id;
+      resolvedLandlordId = property.landlord;
+    } else {
+      // Landlord flow: verify property belongs to landlord.
+      if (property.landlord.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
+
+      // Verify tenant
+      const tenant = await User.findById(tenantId);
+      if (!tenant || tenant.role !== 'tenant') {
+        return res.status(400).json({ message: 'Invalid tenant' });
+      }
+
+      resolvedTenantId = tenantId;
+      resolvedLandlordId = req.user._id;
     }
     
     // Check for overlapping active leases
@@ -117,8 +139,8 @@ exports.createLease = async (req, res) => {
     
     const leaseData = {
       property: propertyId,
-      landlord: req.user._id,
-      tenant: tenantId,
+      landlord: resolvedLandlordId,
+      tenant: resolvedTenantId,
       startDate,
       endDate,
       rentAmount,
@@ -227,10 +249,14 @@ exports.deleteLease = async (req, res) => {
 // @access  Private
 exports.signLease = async (req, res) => {
   try {
-    const { signatureData } = req.body;
-    
+    let { signatureData } = req.body;
+    if (req.file?.path) {
+      const normalized = req.file.path.replace(/\\/g, '/');
+      signatureData = normalized.startsWith('/') ? normalized : `/${normalized}`;
+    }
+
     if (!signatureData) {
-      return res.status(400).json({ message: 'Signature data is required' });
+      return res.status(400).json({ message: 'Signature image is required' });
     }
     
     const lease = await Lease.findById(req.params.id)
@@ -414,8 +440,38 @@ exports.downloadLeaseDocument = async (req, res) => {
       lease.document = docPath;
       await lease.save();
     }
-    
-    res.download(lease.document);
+
+    // pdfGenerator stores a URL path (e.g. /uploads/leases/lease-<id>.pdf)
+    // but res.download needs a filesystem path.
+    const toDiskPath = (maybeUrlPath) => {
+      if (!maybeUrlPath) return null;
+      const normalized = String(maybeUrlPath).replace(/\\/g, '/');
+
+      // Treat URL-style paths as relative to backend root.
+      const relative = normalized.startsWith('/') ? normalized.slice(1) : normalized;
+      return path.join(__dirname, '..', relative);
+    };
+
+    let diskPath = toDiskPath(lease.document);
+
+    // If the file doesn't exist (or document stored as something unexpected), try generating again once.
+    if (!diskPath || !fs.existsSync(diskPath)) {
+      const docPath = await generateLeaseDocument(
+        lease,
+        lease.landlord,
+        lease.tenant,
+        lease.property
+      );
+      lease.document = docPath;
+      await lease.save();
+      diskPath = toDiskPath(docPath);
+    }
+
+    if (!diskPath || !fs.existsSync(diskPath)) {
+      return res.status(500).json({ message: 'Lease document file not found on server' });
+    }
+
+    res.download(diskPath, `lease-${lease._id}.pdf`);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

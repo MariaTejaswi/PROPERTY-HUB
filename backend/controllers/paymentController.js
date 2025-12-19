@@ -88,34 +88,67 @@ exports.getPayment = async (req, res) => {
 exports.createPayment = async (req, res) => {
   try {
     const { propertyId, tenantId, amount, type, description, dueDate, leaseId } = req.body;
-    
-    // Verify property belongs to landlord
+
     const property = await Property.findById(propertyId);
-    if (!property || property.landlord.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' });
     }
-    
-    // Verify tenant
-    const tenant = await User.findById(tenantId);
-    if (!tenant || tenant.role !== 'tenant') {
-      return res.status(400).json({ message: 'Invalid tenant' });
+
+    // Landlord creates payment records for their properties.
+    if (req.user.role === 'landlord') {
+      if (property.landlord.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
+
+      const tenant = await User.findById(tenantId);
+      if (!tenant || tenant.role !== 'tenant') {
+        return res.status(400).json({ message: 'Invalid tenant' });
+      }
+
+      const payment = await Payment.create({
+        property: propertyId,
+        tenant: tenantId,
+        landlord: req.user._id,
+        lease: leaseId,
+        amount,
+        type: type || 'rent',
+        description,
+        dueDate,
+        status: 'pending'
+      });
+
+      await payment.populate('property tenant landlord', 'name email');
+      return res.status(201).json(payment);
     }
-    
-    const payment = await Payment.create({
-      property: propertyId,
-      tenant: tenantId,
-      landlord: req.user._id,
-      lease: leaseId,
-      amount,
-      type: type || 'rent',
-      description,
-      dueDate,
-      status: 'pending'
-    });
-    
-    await payment.populate('property tenant landlord', 'name email');
-    
-    res.status(201).json(payment);
+
+    // Tenant creates a payment record for themselves (to then process via demo gateway).
+    if (req.user.role === 'tenant') {
+      if (!property.landlord) {
+        return res.status(400).json({ message: 'Property has no landlord assigned' });
+      }
+
+      // Only allow tenant to pay for the property they are currently assigned to.
+      if (!property.currentTenant || property.currentTenant.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Not authorized to pay for this property' });
+      }
+
+      const payment = await Payment.create({
+        property: propertyId,
+        tenant: req.user._id,
+        landlord: property.landlord,
+        lease: leaseId,
+        amount,
+        type: type || 'rent',
+        description,
+        dueDate,
+        status: 'pending'
+      });
+
+      await payment.populate('property tenant landlord', 'name email');
+      return res.status(201).json(payment);
+    }
+
+    return res.status(403).json({ message: 'Not authorized' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

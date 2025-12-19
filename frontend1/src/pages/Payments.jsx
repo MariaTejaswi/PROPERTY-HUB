@@ -97,6 +97,13 @@ const Payments = () => {
   const isOverdue = (p) =>
     p.status === "pending" && new Date(p.dueDate) < new Date();
 
+  const canTenantPay = (p) => {
+    if (!isTenant) return false;
+    if (!p) return false;
+    // Allow paying pending (including overdue) and retrying failed payments.
+    return p.status === 'pending' || p.status === 'failed' || isOverdue(p);
+  };
+
   if (loading) return <Loader fullScreen />;
 
   return (
@@ -234,6 +241,25 @@ const Payments = () => {
                   ⬇ Download Receipt
                 </button>
               )}
+
+              {/* TENANT ACTION: PAY */}
+              {canTenantPay(p) && (
+                <button
+                  onClick={() => setSelectedPayment(p)}
+                  className="
+                    mt-4 w-full
+                    py-3 rounded-xl
+                    bg-[#D4AF37]
+                    text-black
+                    font-semibold
+                    hover:bg-[#e5c56a]
+                    shadow-[0_0_20px_rgba(212,175,55,0.35)]
+                    transition
+                  "
+                >
+                  Pay Now
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -245,8 +271,22 @@ const Payments = () => {
               <DemoPaymentGateway
                 paymentId={selectedPayment._id}
                 amount={selectedPayment.amount}
-                onSuccess={() => setSelectedPayment(null)}
+                onSuccess={() => {
+                  setSelectedPayment(null);
+                  setSuccess('Payment processed successfully');
+                  setLoading(true);
+                  fetchPayments();
+                }}
+                onError={(msg) => setError(msg || 'Payment failed')}
               />
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => setSelectedPayment(null)}
+                  className="rounded-xl border border-white/20 px-5 py-2 text-gray-200 hover:bg-white/10 transition"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}

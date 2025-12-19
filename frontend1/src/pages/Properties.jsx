@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 import Loader from "../components/common/Loader";
 import Alert from "../components/common/Alert";
+import DemoPaymentGateway from "../components/payments/DemoPaymentGateway";
 import { formatCurrency } from "../utils/formatters";
 import {
   PlusIcon,
@@ -12,12 +13,27 @@ import {
 } from "@heroicons/react/24/outline";
 
 const Properties = () => {
-  const { isLandlord } = useAuth();
+  const { isLandlord, isTenant } = useAuth();
   const navigate = useNavigate();
 
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [buyingId, setBuyingId] = useState(null);
+
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [payProperty, setPayProperty] = useState(null);
+  const [paySubmitting, setPaySubmitting] = useState(false);
+  const [payError, setPayError] = useState("");
+  const [paySuccess, setPaySuccess] = useState("");
+  const [createdPayment, setCreatedPayment] = useState(null);
+  const [payForm, setPayForm] = useState({
+    amount: "",
+    type: "rent",
+    description: "",
+    dueDate: new Date().toISOString().split("T")[0],
+  });
 
   useEffect(() => {
     fetchProperties();
@@ -25,12 +41,115 @@ const Properties = () => {
 
   const fetchProperties = async () => {
     try {
-      const response = await api.get("/properties");
-      setProperties(response.data.properties || []);
+      if (isTenant) {
+        const [myRes, availableRes] = await Promise.all([
+          api.get('/properties', { params: { my: 'true' } }),
+          api.get('/properties'),
+        ]);
+
+        const myList = myRes.data.properties || [];
+        const availableList = availableRes.data.properties || [];
+        const merged = new Map();
+
+        // Show assigned property first, then available.
+        myList.forEach((p) => merged.set(p._id, p));
+        availableList.forEach((p) => {
+          if (!merged.has(p._id)) merged.set(p._id, p);
+        });
+
+        setProperties(Array.from(merged.values()));
+      } else {
+        const response = await api.get("/properties");
+        setProperties(response.data.properties || []);
+      }
     } catch (err) {
       setError("Failed to load properties");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBuy = async (property) => {
+    if (!property?._id) return;
+    const landlordId = property?.landlord?._id || property?.landlord;
+    if (!landlordId) {
+      setError('This property has no landlord assigned.');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setBuyingId(property._id);
+
+    try {
+      const formData = new FormData();
+      formData.append('recipientIds', JSON.stringify([landlordId]));
+      formData.append('subject', 'Property purchase inquiry');
+      formData.append(
+        'content',
+        `Hi, I'm interested in buying this property: ${property.name}. Please contact me with next steps.`
+      );
+      formData.append('relatedTo', 'property');
+      formData.append('propertyId', property._id);
+
+      await api.post('/messages', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setSuccess('Sent to landlord. Check Messages for replies.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to contact landlord');
+    } finally {
+      setBuyingId(null);
+    }
+  };
+
+  const openPayModal = (property) => {
+    setPayError("");
+    setPaySuccess("");
+    setCreatedPayment(null);
+    setPayProperty(property);
+    setPayForm({
+      amount: "",
+      type: "rent",
+      description: "",
+      dueDate: new Date().toISOString().split("T")[0],
+    });
+    setShowPayModal(true);
+  };
+
+  const closePayModal = () => {
+    setShowPayModal(false);
+    setPayProperty(null);
+    setPaySubmitting(false);
+    setPayError("");
+    setPaySuccess("");
+    setCreatedPayment(null);
+  };
+
+  const submitPayDetails = async (e) => {
+    e.preventDefault();
+    if (!payProperty?._id) return;
+
+    setPaySubmitting(true);
+    setPayError("");
+    setPaySuccess("");
+
+    try {
+      const payload = {
+        propertyId: payProperty._id,
+        amount: Number(payForm.amount),
+        type: payForm.type,
+        description: payForm.description || undefined,
+        dueDate: payForm.dueDate,
+      };
+      const res = await api.post('/payments', payload);
+      setCreatedPayment(res.data.payment || res.data);
+      setPaySuccess('Payment created. Complete checkout below.');
+    } catch (err) {
+      setPayError(err.response?.data?.message || 'Failed to create payment');
+    } finally {
+      setPaySubmitting(false);
     }
   };
 
@@ -74,7 +193,8 @@ const Properties = () => {
           )}
         </div>
 
-        {error && <Alert type="error" message={error} />}
+        {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+        {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
         {/* EMPTY */}
         {properties.length === 0 ? (
@@ -181,6 +301,27 @@ const Properties = () => {
                       View
                     </button>
 
+                    {isTenant && (
+                      <>
+                        <button
+                          onClick={() => openPayModal(property)}
+                          className="px-4 py-2 bg-white/10 text-white 
+                                     rounded-lg hover:bg-white/20 transition"
+                        >
+                          Pay
+                        </button>
+
+                        <button
+                          onClick={() => handleBuy(property)}
+                          disabled={buyingId === property._id}
+                          className="px-4 py-2 bg-[#D4AF37] hover:bg-[#e5c56a] 
+                                     text-black font-semibold rounded-lg transition disabled:opacity-60"
+                        >
+                          {buyingId === property._id ? 'Sending…' : 'Message'}
+                        </button>
+                      </>
+                    )}
+
                     {isLandlord && (
                       <>
                         <button
@@ -212,6 +353,102 @@ const Properties = () => {
           </div>
         )}
       </div>
+
+      {/* TENANT PAY MODAL */}
+      {showPayModal && isTenant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-black/90 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white">
+                Pay {payProperty?.name || 'Property'}
+              </h2>
+              <button
+                onClick={closePayModal}
+                className="rounded-lg border border-white/20 px-3 py-1 text-sm text-gray-200 hover:bg-white/10"
+              >
+                Close
+              </button>
+            </div>
+
+            {payError && <Alert type="error" message={payError} onClose={() => setPayError('')} />}
+            {paySuccess && <Alert type="success" message={paySuccess} onClose={() => setPaySuccess('')} />}
+
+            {!createdPayment ? (
+              <form onSubmit={submitPayDetails} className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm text-gray-300">Amount</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={payForm.amount}
+                    onChange={(e) => setPayForm((p) => ({ ...p, amount: e.target.value }))}
+                    className="w-full rounded-lg border border-white/20 bg-black/40 p-3 text-white focus:border-[#D4AF37] focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-sm text-gray-300">Type</label>
+                    <select
+                      value={payForm.type}
+                      onChange={(e) => setPayForm((p) => ({ ...p, type: e.target.value }))}
+                      className="w-full rounded-lg border border-white/20 bg-black/40 p-3 text-white focus:border-[#D4AF37] focus:outline-none"
+                    >
+                      <option value="rent">Rent</option>
+                      <option value="deposit">Deposit</option>
+                      <option value="other">Utilities</option>
+                      <option value="maintenance">Maintenance Fee</option>
+                      <option value="late_fee">Late Fee</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-sm text-gray-300">Due Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={payForm.dueDate}
+                      onChange={(e) => setPayForm((p) => ({ ...p, dueDate: e.target.value }))}
+                      className="w-full rounded-lg border border-white/20 bg-black/40 p-3 text-white focus:border-[#D4AF37] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm text-gray-300">Description (optional)</label>
+                  <input
+                    value={payForm.description}
+                    onChange={(e) => setPayForm((p) => ({ ...p, description: e.target.value }))}
+                    placeholder="e.g. January rent"
+                    className="w-full rounded-lg border border-white/20 bg-black/40 p-3 text-white placeholder-gray-500 focus:border-[#D4AF37] focus:outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={paySubmitting}
+                  className="w-full rounded-xl bg-[#D4AF37] py-3 font-semibold text-black hover:bg-[#e5c56a] disabled:opacity-60"
+                >
+                  {paySubmitting ? 'Creating…' : 'Continue to Checkout'}
+                </button>
+              </form>
+            ) : (
+              <DemoPaymentGateway
+                paymentId={createdPayment._id}
+                amount={createdPayment.amount}
+                onSuccess={() => {
+                  setSuccess('Payment sent to landlord');
+                  closePayModal();
+                }}
+                onError={(msg) => setPayError(msg || 'Payment failed')}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

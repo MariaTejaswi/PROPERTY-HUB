@@ -11,12 +11,12 @@ const Button = ({
   type = 'button',
   ...props 
 }) => {
-  const baseClasses = 'font-medium rounded-lg transition-all duration-200 inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2';
+  const baseClasses = 'font-semibold rounded-lg transition-all duration-200 inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variantClasses = {
-    primary: 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm hover:shadow-md focus:ring-primary-500 disabled:bg-primary-300',
-    secondary: 'bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-300 hover:border-gray-400 focus:ring-gray-500 disabled:bg-gray-100',
-    outline: 'bg-transparent hover:bg-primary-50 text-primary-600 border-2 border-primary-600 hover:border-primary-700 focus:ring-primary-500 disabled:border-primary-300',
+    primary: 'bg-[#D4AF37] hover:bg-[#c69d2f] text-black shadow-lg hover:shadow-xl focus:ring-[#D4AF37]',
+    secondary: 'bg-white/10 hover:bg-white/20 text-gray-200 border border-white/20 focus:ring-[#D4AF37]',
+    outline: 'bg-transparent hover:bg-[#D4AF37] text-[#D4AF37] hover:text-black border border-[#D4AF37] focus:ring-[#D4AF37]',
     danger: 'bg-red-600 hover:bg-red-700 text-white shadow-sm hover:shadow-md focus:ring-red-500 disabled:bg-red-300',
     success: 'bg-green-600 hover:bg-green-700 text-white shadow-sm hover:shadow-md focus:ring-green-500 disabled:bg-green-300',
     ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-500',
@@ -29,7 +29,7 @@ const Button = ({
   };
   
   const widthClass = fullWidth ? 'w-full' : '';
-  const disabledClass = (disabled || loading) ? 'opacity-50 cursor-not-allowed' : '';
+  const disabledClass = '';
   
   const className = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${widthClass} ${disabledClass}`.trim();
   

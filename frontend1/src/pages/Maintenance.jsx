@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 import Alert from "../components/common/Alert";
@@ -9,6 +9,7 @@ import { formatDate } from "../utils/formatters";
 const Maintenance = () => {
   const { user, isLandlord, isTenant } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -73,7 +74,7 @@ const Maintenance = () => {
 
           {isTenant && (
             <button
-              onClick={() => navigate("/maintenance/new")}
+              onClick={() => navigate("/maintenance/new", { state: { backgroundLocation: location } })}
               className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#e2c875] text-black 
                          font-semibold rounded-lg shadow-lg transition"
             >
@@ -92,7 +93,7 @@ const Maintenance = () => {
 
         {/* FILTER BUTTONS */}
         <div className="flex gap-3 mb-8">
-          {["all", "pending", "in_progress", "completed"].map((status) => (
+          {["all", "open", "in_progress", "resolved"].map((status) => (
             <button
               key={status}
               className={`px-4 py-2 rounded-lg font-medium transition ${
@@ -102,7 +103,7 @@ const Maintenance = () => {
               }`}
               onClick={() => setFilter(status)}
             >
-              {status.replace("_", " ").toUpperCase()}
+              {(status === 'open' ? 'PENDING' : status.replace("_", " ").toUpperCase())}
             </button>
           ))}
         </div>
@@ -122,7 +123,7 @@ const Maintenance = () => {
 
             {isTenant && (
               <button
-                onClick={() => navigate("/maintenance/new")}
+                onClick={() => navigate("/maintenance/new", { state: { backgroundLocation: location } })}
                 className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#e2c875] 
                            text-black font-semibold rounded-lg shadow-lg transition"
               >
@@ -166,14 +167,16 @@ const Maintenance = () => {
                     {/* STATUS */}
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        req.status === "pending"
+                        req.status === "open"
                           ? "bg-yellow-500/20 text-yellow-300"
                           : req.status === "in_progress"
                           ? "bg-blue-500/20 text-blue-300"
-                          : "bg-green-500/20 text-green-300"
+                        : req.status === "resolved" || req.status === "closed"
+                          ? "bg-green-500/20 text-green-300"
+                          : "bg-white/10 text-gray-300"
                       }`}
                     >
-                      {req.status.replace("_", " ")}
+                      {(req.status === 'open' ? 'pending' : req.status).replace("_", " ")}
                     </span>
                   </div>
                 </div>
@@ -242,31 +245,19 @@ const Maintenance = () => {
                     ))}
 
                     {req.comments.length > 2 && (
-                      <button
-                        onClick={() => navigate(`/maintenance/${req._id}`)}
-                        className="text-[#D4AF37] text-sm font-medium hover:underline mt-2"
-                      >
-                        View all comments →
-                      </button>
+                      <p className="text-gray-400 text-sm mt-2">
+                        {req.comments.length - 2} more comment(s)
+                      </p>
                     )}
                   </div>
                 )}
 
                 {/* ACTION BUTTONS */}
                 <div className="flex flex-wrap gap-3 mt-6 border-t border-white/10 pt-5">
-                  {/* VIEW DETAILS */}
-                  <button
-                    onClick={() => navigate(`/maintenance/${req._id}`)}
-                    className="px-4 py-2 bg-white/10 text-white rounded-lg 
-                               hover:bg-white/20 transition"
-                  >
-                    View Details
-                  </button>
-
                   {/* TENANT EDITING */}
                   {isTenant &&
                     req.tenant?._id === user._id &&
-                    req.status === "pending" && (
+                    req.status === "open" && (
                       <>
                         <button
                           onClick={() =>
@@ -288,9 +279,9 @@ const Maintenance = () => {
                     )}
 
                   {/* LANDLORD WORKFLOW */}
-                  {isLandlord && req.status !== "completed" && (
+                  {isLandlord && !['resolved','closed'].includes(req.status) && (
                     <>
-                      {req.status === "pending" && (
+                      {req.status === "open" && (
                         <button
                           onClick={() => updateStatus(req._id, "in_progress")}
                           className="px-4 py-2 bg-blue-500/20 text-blue-300 rounded-lg 
@@ -302,7 +293,7 @@ const Maintenance = () => {
 
                       {req.status === "in_progress" && (
                         <button
-                          onClick={() => updateStatus(req._id, "completed")}
+                          onClick={() => updateStatus(req._id, "resolved")}
                           className="px-4 py-2 bg-green-600 hover:bg-green-700 
                                      text-white rounded-lg transition"
                         >

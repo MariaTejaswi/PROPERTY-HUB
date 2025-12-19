@@ -21,7 +21,14 @@ const { authorize } = require('../middleware/roleCheck');
 // Validation rules
 const paymentValidation = [
   body('propertyId').notEmpty().withMessage('Property ID is required'),
-  body('tenantId').notEmpty().withMessage('Tenant ID is required'),
+  body('tenantId').custom((value, { req }) => {
+    // Tenants pay as themselves; tenantId is ignored/filled server-side.
+    if (req.user?.role === 'tenant') return true;
+    if (!value) {
+      throw new Error('Tenant ID is required');
+    }
+    return true;
+  }),
   body('amount').isFloat({ min: 0 }).withMessage('Amount must be a positive number'),
   body('dueDate').isISO8601().withMessage('Valid due date is required')
 ];
@@ -57,10 +64,10 @@ router.get('/:id', getPayment);
 // Get payment receipt
 router.get('/:id/receipt', getReceipt);
 
-// Create payment (landlord only)
+// Create payment (landlord or tenant)
 router.post(
   '/',
-  authorize('landlord'),
+  authorize('landlord', 'tenant'),
   paymentValidation,
   validateRequest,
   createPayment

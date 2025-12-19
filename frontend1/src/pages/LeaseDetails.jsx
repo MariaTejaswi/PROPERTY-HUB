@@ -6,7 +6,6 @@ import Card from "../components/common/Card";
 import Button from "../components/common/Button";
 import Loader from "../components/common/Loader";
 import Alert from "../components/common/Alert";
-import SignaturePad from "../components/leases/SignaturePad";
 import { formatCurrency, formatDate } from "../utils/formatters";
 
 const LeaseDetails = () => {
@@ -19,6 +18,7 @@ const LeaseDetails = () => {
   const [error, setError] = useState("");
   const [showSignModal, setShowSignModal] = useState(false);
   const [signing, setSigning] = useState(false);
+  const [signatureFile, setSignatureFile] = useState(null);
 
   useEffect(() => {
     fetchLease();
@@ -37,17 +37,20 @@ const LeaseDetails = () => {
     }
   };
 
-  const handleSign = async (signatureData) => {
+  const handleSign = async () => {
     try {
       setSigning(true);
-      const role = isLandlord ? "landlord" : "tenant";
+      if (!signatureFile) {
+        setError("Please upload your signature image");
+        return;
+      }
 
-      await api.post(`/leases/${id}/sign`, {
-        signatureData,
-        role,
-      });
+      const formData = new FormData();
+      formData.append("signature", signatureFile);
+      await api.post(`/leases/${id}/sign`, formData);
 
       setShowSignModal(false);
+      setSignatureFile(null);
       fetchLease();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to save signature");
@@ -79,7 +82,7 @@ const LeaseDetails = () => {
 
   const downloadPDF = async () => {
     try {
-      const response = await api.get(`/leases/${id}/pdf`, {
+      const response = await api.get(`/leases/${id}/document`, {
         responseType: "blob",
       });
 
@@ -91,6 +94,7 @@ const LeaseDetails = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       setError("Failed to download PDF");
     }
@@ -241,14 +245,23 @@ const LeaseDetails = () => {
             <div className="space-y-4">
 
               <TermRow label="Monthly Rent" value={formatCurrency(lease.rentAmount)} highlight />
-              <TermRow label="Security Deposit" value={formatCurrency(lease.securityDeposit)} />
+              <TermRow
+                label="Security Deposit"
+                value={
+                  typeof lease.depositAmount === 'number'
+                    ? formatCurrency(lease.depositAmount)
+                    : '—'
+                }
+              />
               <TermRow label="Start Date" value={formatDate(lease.startDate)} />
               <TermRow label="End Date" value={formatDate(lease.endDate)} />
               <TermRow label="Payment Due Day" value={`Day ${lease.paymentDueDay} each month`} />
-              <TermRow
-                label="Late Fee"
-                value={`${formatCurrency(lease.lateFee)} after ${lease.gracePeriodDays} days`}
-              />
+              {typeof lease.lateFee === 'number' && typeof lease.gracePeriodDays === 'number' && (
+                <TermRow
+                  label="Late Fee"
+                  value={`${formatCurrency(lease.lateFee)} after ${lease.gracePeriodDays} days`}
+                />
+              )}
 
             </div>
           </Card>
@@ -261,7 +274,7 @@ const LeaseDetails = () => {
           )}
 
           {/* DIGITAL SIGNATURES */}
-          <Card title="Digital Signatures">
+          <Card title="Signatures">
             <div className="grid sm:grid-cols-2 gap-8">
 
               {/* LANDLORD SIGNATURE */}
@@ -316,11 +329,11 @@ const LeaseDetails = () => {
           onClick={() => setShowSignModal(false)}
         >
           <div
-            className="bg-gray-900 w-full max-w-lg rounded-2xl p-6 shadow-2xl border border-white/10"
+            className="bg-black/70 backdrop-blur-xl w-full max-w-lg rounded-2xl p-6 shadow-2xl border border-[#D4AF37]/30"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-[#D4AF37]">Sign Lease Agreement</h2>
+              <h2 className="text-xl font-bold text-[#D4AF37]">Upload Signature</h2>
               <button
                 onClick={() => setShowSignModal(false)}
                 className="text-gray-400 hover:text-white text-2xl"
@@ -330,10 +343,24 @@ const LeaseDetails = () => {
             </div>
 
             <p className="text-gray-400 mb-4">
-              Please sign using your mouse or touchscreen
+              Upload an image of your signature (PNG or JPG).
             </p>
 
-            <SignaturePad onSave={handleSign} loading={signing} />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setSignatureFile(e.target.files?.[0] || null)}
+              className="text-gray-300"
+            />
+
+            <div className="flex justify-end gap-3 mt-8">
+              <Button variant="outline" onClick={() => setShowSignModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSign} disabled={signing || !signatureFile}>
+                {signing ? "Uploading..." : "Submit"}
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -354,17 +381,30 @@ const TermRow = ({ label, value, highlight }) => (
   </div>
 );
 
+const getSignatureSrc = (signatureData) => {
+  if (!signatureData) return null;
+  if (signatureData.startsWith("data:")) return signatureData;
+  // Stored as a server path like "uploads/leases/..." or "/uploads/leases/..."
+  const normalized = signatureData.replace(/\\/g, "/");
+  const path = normalized.startsWith("/") ? normalized : `/${normalized}`;
+  return `http://localhost:5000${path}`;
+};
+
 const SignatureBlock = ({ title, signature, name }) => (
   <div>
     <h4 className="font-semibold text-[#D4AF37] mb-2">{title}</h4>
 
     {signature?.signed ? (
       <div>
-        <img
-          src={signature.signatureData}
-          alt="Signature"
-          className="bg-white rounded-xl p-3 border border-gray-700"
-        />
+        {getSignatureSrc(signature.signatureData) ? (
+          <img
+            src={getSignatureSrc(signature.signatureData)}
+            alt="Signature"
+            className="w-full rounded-xl p-3 border border-[#D4AF37]/20 bg-black/40"
+          />
+        ) : (
+          <p className="text-gray-500 text-sm italic">Signature image missing</p>
+        )}
         <p className="text-gray-400 text-sm mt-2">
           Signed on {formatDate(signature.signedAt)}
         </p>

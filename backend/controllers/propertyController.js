@@ -10,9 +10,17 @@ exports.getProperties = async (req, res) => {
     
     // Filter based on user role
     if (req.user.role === 'landlord') {
+      // Landlords see only their properties
       query.landlord = req.user._id;
     } else if (req.user.role === 'tenant') {
-      query.currentTenant = req.user._id;
+      // Tenants should be able to browse available properties by default
+      // If they request "my=true", show only properties assigned to them
+      if (req.query.my === 'true') {
+        query.currentTenant = req.user._id;
+      } else {
+        query.isAvailable = true;
+        query.status = 'available';
+      }
     } else if (req.user.role === 'manager') {
       query.assignedManager = req.user._id;
     }
@@ -66,9 +74,15 @@ exports.getProperty = async (req, res) => {
     
     // Check authorization - allow landlord, assigned tenant, and assigned manager
     const isAuthorized = 
-      req.user.role === 'landlord' && property.landlord._id.toString() === req.user._id.toString() ||
-      req.user.role === 'tenant' && property.currentTenant && property.currentTenant._id.toString() === req.user._id.toString() ||
-      req.user.role === 'manager' && property.assignedManager && property.assignedManager._id.toString() === req.user._id.toString();
+      // Landlord: must own the property
+      (req.user.role === 'landlord' && property.landlord && property.landlord._id.toString() === req.user._id.toString()) ||
+      // Tenant: can view if assigned to them OR the property is available to lease
+      (req.user.role === 'tenant' && (
+        (property.currentTenant && property.currentTenant._id.toString() === req.user._id.toString()) ||
+        property.isAvailable === true || property.status === 'available'
+      )) ||
+      // Manager: must be assigned
+      (req.user.role === 'manager' && property.assignedManager && property.assignedManager._id.toString() === req.user._id.toString());
     
     if (!isAuthorized) {
       return res.status(403).json({ message: 'Not authorized to view this property' });

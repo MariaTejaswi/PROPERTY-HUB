@@ -7,10 +7,10 @@ import Button from "../components/common/Button";
 import Loader from "../components/common/Loader";
 import Alert from "../components/common/Alert";
 
-const MaintenanceForm = () => {
+const MaintenanceForm = ({ isModal = false }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isTenant } = useAuth();
   const isEditMode = Boolean(id);
 
   const [loading, setLoading] = useState(false);
@@ -58,11 +58,40 @@ const MaintenanceForm = () => {
 
   const fetchProperties = async () => {
     try {
-      const response = await api.get("/properties");
-      const userProps = response.data.filter(
-        (prop) => prop.currentTenant?._id === user._id || prop.tenant?._id === user._id
-      );
-      setProperties(userProps);
+      const userId = user?._id || user?.id;
+
+      const extractProperties = (response) => {
+        const data = response?.data;
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.properties)) return data.properties;
+        return [];
+      };
+
+      // Tenants can browse available properties by default, but the maintenance request
+      // form should also include properties assigned to them.
+      if (isTenant) {
+        const [availableRes, myRes] = await Promise.all([
+          api.get('/properties'),
+          api.get('/properties', { params: { my: true } })
+        ]);
+
+        const available = extractProperties(availableRes);
+        const mine = extractProperties(myRes);
+
+        const mergedMap = new Map();
+        [...available, ...mine].forEach((p) => {
+          if (p && p._id) mergedMap.set(p._id, p);
+        });
+
+        const merged = Array.from(mergedMap.values());
+        setProperties(merged);
+        return;
+      }
+
+      // Landlord/manager: backend already filters appropriately.
+      const response = await api.get('/properties');
+      const props = extractProperties(response);
+      setProperties(props);
     } catch {
       setError("Failed to load properties");
     }
@@ -139,8 +168,8 @@ const MaintenanceForm = () => {
   if (fetchLoading) return <Loader fullScreen />;
 
   return (
-    <div className="min-h-screen bg-black py-10 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className={isModal ? "py-6 px-4" : "min-h-screen bg-black py-10 px-4"}>
+      <div className={isModal ? "max-w-4xl mx-auto" : "max-w-4xl mx-auto"}>
         {/* Header */}
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold text-[#D4AF37]">
@@ -179,7 +208,7 @@ const MaintenanceForm = () => {
 
                 {properties.map((p) => (
                   <option key={p._id} value={p._id} className="text-black">
-                    {p.name} - {p.address?.street}, {p.address?.city}
+                    {(p.landlord?.name || "Landlord")} - {p.name}
                   </option>
                 ))}
               </select>
@@ -255,50 +284,11 @@ const MaintenanceForm = () => {
               />
             </div>
 
-            {/* IMAGES */}
-            <div>
-              <h3 className="text-xl font-semibold text-white mb-2">Images (Optional)</h3>
-              <p className="text-gray-400 mb-4">
-                Upload clear photos of the issue for quicker diagnosis.
-              </p>
-
-              {existingImages.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-gray-300 mb-2">Current Images:</h4>
-                  <div className="flex gap-3 flex-wrap">
-                    {existingImages.map((img, i) => (
-                      <img
-                        key={i}
-                        src={`http://localhost:5000${img}`}
-                        alt=""
-                        className="w-28 h-28 object-cover rounded-lg border border-white/20"
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleFileChange}
-                className="text-gray-300"
-              />
-
-              {selectedFiles.length > 0 && (
-                <p className="text-gray-400 mt-2">{selectedFiles.length} image(s) selected</p>
-              )}
-
-              <small className="text-gray-500 block mt-1">
-                JPG, PNG — Max 5MB each.
-              </small>
-            </div>
           </div>
 
           {/* ACTION BUTTONS */}
           <div className="flex justify-end gap-4 mt-10">
-            <Button type="button" variant="outline" onClick={() => navigate("/maintenance")}>
+            <Button type="button" variant="outline" onClick={() => (isModal ? navigate(-1) : navigate("/maintenance"))}>
               Cancel
             </Button>
 
