@@ -101,7 +101,7 @@ const Register = () => {
           </div>
 
           {/* FORM */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
 
             {/* NAME */}
             <div>
@@ -129,6 +129,7 @@ const Register = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  autoComplete="off"
                   placeholder="abc@example.com"
                   required
                   className="w-full pl-10 py-2.5 rounded-lg bg-black border border-white/20 text-white focus:ring-2 focus:ring-[#D4AF37] outline-none"
@@ -161,6 +162,7 @@ const Register = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
+                  autoComplete="new-password"
                   placeholder="Minimum 6 characters"
                   required
                   className="w-full pl-10 py-2.5 rounded-lg bg-black border border-white/20 text-white focus:ring-2 focus:ring-[#D4AF37] outline-none"
@@ -178,6 +180,7 @@ const Register = () => {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
+                  autoComplete="new-password"
                   placeholder="Re-enter password"
                   required
                   className="w-full pl-10 py-2.5 rounded-lg bg-black border border-white/20 text-white focus:ring-2 focus:ring-[#D4AF37] outline-none"

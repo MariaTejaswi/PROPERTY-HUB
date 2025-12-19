@@ -7,10 +7,13 @@ const createTransporter = () => {
     return null;
   }
 
-  return nodemailer.createTransporter({
+  const port = Number(process.env.SMTP_PORT || 587);
+  const secure = port === 465; // true for 465, false for other ports
+
+  return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT || 587,
-    secure: false, // true for 465, false for other ports
+    port,
+    secure,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
@@ -53,6 +56,7 @@ const sendEmail = async (options) => {
  */
 const sendWelcomeEmail = async (user) => {
   const subject = 'Welcome to PropertyHub!';
+  const text = `Welcome to PropertyHub, ${user.name}!\n\nYour account has been successfully created.\nRole: ${String(user.role || '').toUpperCase()}\n\nYou can now log in and start using PropertyHub.\n\n— PropertyHub Team`;
   const html = `
     <h1>Welcome to PropertyHub, ${user.name}!</h1>
     <p>Thank you for joining PropertyHub. Your account has been successfully created.</p>
@@ -65,6 +69,7 @@ const sendWelcomeEmail = async (user) => {
   return await sendEmail({
     to: user.email,
     subject,
+    text,
     html
   });
 };

@@ -24,8 +24,17 @@ exports.register = async (req, res) => {
       phone
     });
 
-    // Send welcome email (don't wait for it)
-    sendWelcomeEmail(user).catch(err => console.error('Welcome email error:', err));
+    // Send welcome email (don't block signup)
+    sendWelcomeEmail(user)
+      .then((result) => {
+        console.log('Welcome email result:', {
+          to: user.email,
+          success: result?.success,
+          messageId: result?.messageId,
+          error: result?.error
+        });
+      })
+      .catch((err) => console.error('Welcome email error:', err));
 
     // Generate token
     const token = generateToken(user._id);
