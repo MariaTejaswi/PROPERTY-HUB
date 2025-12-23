@@ -86,10 +86,11 @@ const LeaseForm = ({ isModal = false }) => {
         setProperties(Array.from(byId.values()));
       } else {
         const response = await api.get("/properties");
-        const available = (response.data.properties || []).filter(
-          (p) => p.status === "available" && p.isAvailable !== false
-        );
-        setProperties(available);
+
+            // For landlords, the API already returns only their properties.
+            // Don't filter by status here; a landlord may need to draft a lease
+            // even when the property's status isn't strictly "available".
+            setProperties(response.data.properties || []);
       }
     } catch {
       setError("Failed to fetch properties");

@@ -68,11 +68,11 @@ const Home = () => {
   ];
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative isolate min-h-screen">
 
       {/* Background Image */}
       <div
-        className="fixed inset-0 bg-cover bg-center -z-20"
+        className="fixed inset-0 bg-cover bg-center z-0"
         style={{
           backgroundImage: `url(${bg2})`,
           filter: "blur(2px) brightness(0.45)",
@@ -81,7 +81,9 @@ const Home = () => {
       ></div>
 
       {/* Soft Overlay */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 -z-10"></div>
+      <div className="fixed inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 z-10"></div>
+
+      <div className="relative z-20">
 
       {/* NAVIGATION */}
       <nav className="bg-black/30 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50 shadow-sm">
@@ -211,6 +213,7 @@ const Home = () => {
         </div>
       </footer>
 
+      </div>
     </div>
   );
 };

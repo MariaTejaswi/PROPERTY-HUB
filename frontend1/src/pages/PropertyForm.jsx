@@ -30,7 +30,7 @@ const PropertyForm = () => {
       city: "",
       state: "",
       zipCode: "",
-      country: "USA",
+      country: "India",
     },
     amenities: [],
   });
