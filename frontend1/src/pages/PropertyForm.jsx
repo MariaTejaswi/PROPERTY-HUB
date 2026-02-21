@@ -98,7 +98,7 @@ const PropertyForm = () => {
     try {
       const fd = new FormData();
       const skipKeys = new Set([
-        'landlord', '_id', '__v', 'createdAt', 'updatedAt', 'images', 'currentTenant', 'assignedManager'
+        'landlord', '_id', '__v', 'createdAt', 'updatedAt', 'images', 'currentTenant'
       ]);
       Object.entries(formData).forEach(([k, v]) => {
         if (skipKeys.has(k)) return;

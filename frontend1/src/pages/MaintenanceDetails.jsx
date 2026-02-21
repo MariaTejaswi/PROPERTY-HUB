@@ -336,21 +336,6 @@ const MaintenanceDetails = () => {
             )}
           </div>
 
-          {isLandlord && (
-            <div className="bg-white/6 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-lg">
-              <h4 className="text-sm uppercase tracking-wider text-gray-400 mb-3">Assigned To</h4>
-              {request.assignedTo ? (
-                <>
-                  <p className="text-white font-medium">{request.assignedTo.name}</p>
-                  <p className="text-gray-400 text-sm">{request.assignedTo.email}</p>
-                  <p className="text-gray-400 text-sm">{request.assignedTo.phone || "N/A"}</p>
-                </>
-              ) : (
-                <p className="text-gray-400">Not assigned</p>
-              )}
-            </div>
-          )}
-
           <div className="bg-white/6 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-lg">
             <h4 className="text-sm uppercase tracking-wider text-gray-400 mb-3">Timeline</h4>
             <div className="space-y-4">

@@ -30,19 +30,3 @@ exports.isTenant = (req, res, next) => {
   }
   next();
 };
-
-// Check if user is manager
-exports.isManager = (req, res, next) => {
-  if (req.user.role !== 'manager') {
-    return res.status(403).json({ message: 'Access denied. Manager only.' });
-  }
-  next();
-};
-
-// Check if user is landlord or manager
-exports.isLandlordOrManager = (req, res, next) => {
-  if (!['landlord', 'manager'].includes(req.user.role)) {
-    return res.status(403).json({ message: 'Access denied. Landlord or Manager only.' });
-  }
-  next();
-};

@@ -56,17 +56,6 @@ const seedDatabase = async () => {
       isEmailVerified: true
     });
 
-    // Create Property Manager
-    const manager = await User.create({
-      name: 'Sarah Manager',
-      email: 'manager@test.com',
-      password: 'Test123!',
-      role: 'manager',
-      phone: '555-0301',
-      isActive: true,
-      isEmailVerified: true
-    });
-
     console.log('Creating properties...');
 
     // Create Properties
@@ -89,8 +78,7 @@ const seedDatabase = async () => {
       amenities: ['Parking', 'Pool', 'Gym', 'Laundry'],
       status: 'occupied',
       isAvailable: false,
-      currentTenant: tenant1._id,
-      assignedManager: manager._id
+      currentTenant: tenant1._id
     });
 
     const property2 = await Property.create({
@@ -286,7 +274,6 @@ const seedDatabase = async () => {
       property: property1._id,
       tenant: tenant1._id,
       landlord: landlord._id,
-      assignedTo: manager._id,
       title: 'Leaking Kitchen Faucet',
       description: 'The kitchen faucet has been leaking for the past few days. It drips constantly even when fully closed.',
       category: 'plumbing',
@@ -299,8 +286,8 @@ const seedDatabase = async () => {
           createdAt: new Date()
         },
         {
-          user: manager._id,
-          text: 'I will come by tomorrow to take a look',
+          user: landlord._id,
+          text: 'Thanks for reporting. I will check it tomorrow.',
           createdAt: new Date()
         }
       ]
@@ -321,7 +308,6 @@ const seedDatabase = async () => {
       property: property1._id,
       tenant: tenant1._id,
       landlord: landlord._id,
-      assignedTo: manager._id,
       title: 'Light Bulb Replacement',
       description: 'Hallway light bulb needs replacement',
       category: 'other',
@@ -363,7 +349,6 @@ const seedDatabase = async () => {
     console.log('Landlord:  landlord@test.com / Test123!');
     console.log('Tenant 1:  tenant1@test.com / Test123!');
     console.log('Tenant 2:  tenant2@test.com / Test123!');
-    console.log('Manager:   manager@test.com / Test123!');
     console.log('===============\n');
 
     process.exit(0);

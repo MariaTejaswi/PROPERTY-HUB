@@ -21,8 +21,6 @@ exports.getProperties = async (req, res) => {
         query.isAvailable = true;
         query.status = 'available';
       }
-    } else if (req.user.role === 'manager') {
-      query.assignedManager = req.user._id;
     }
     
     // Additional filters
@@ -45,7 +43,6 @@ exports.getProperties = async (req, res) => {
     const properties = await Property.find(query)
       .populate('landlord', 'name email phone')
       .populate('currentTenant', 'name email phone')
-      .populate('assignedManager', 'name email phone')
       .sort({ createdAt: -1 });
     
     res.json({
@@ -65,14 +62,13 @@ exports.getProperty = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id)
       .populate('landlord', 'name email phone')
-      .populate('currentTenant', 'name email phone')
-      .populate('assignedManager', 'name email phone');
+      .populate('currentTenant', 'name email phone');
     
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
     }
     
-    // Check authorization - allow landlord, assigned tenant, and assigned manager
+    // Check authorization - allow landlord and assigned tenant (or browsing available properties)
     const isAuthorized = 
       // Landlord: must own the property
       (req.user.role === 'landlord' && property.landlord && property.landlord._id.toString() === req.user._id.toString()) ||
@@ -80,9 +76,7 @@ exports.getProperty = async (req, res) => {
       (req.user.role === 'tenant' && (
         (property.currentTenant && property.currentTenant._id.toString() === req.user._id.toString()) ||
         property.isAvailable === true || property.status === 'available'
-      )) ||
-      // Manager: must be assigned
-      (req.user.role === 'manager' && property.assignedManager && property.assignedManager._id.toString() === req.user._id.toString());
+      ));
     
     if (!isAuthorized) {
       return res.status(403).json({ message: 'Not authorized to view this property' });
@@ -243,7 +237,7 @@ exports.updateProperty = async (req, res) => {
       req.params.id,
       updateData,
       { new: true, runValidators: true }
-    ).populate('landlord currentTenant assignedManager', 'name email phone');
+    ).populate('landlord currentTenant', 'name email phone');
     
     res.json(property);
   } catch (error) {
@@ -357,40 +351,3 @@ exports.removeTenant = async (req, res) => {
   }
 };
 
-// @desc    Assign manager to property
-// @route   PUT /api/properties/:id/manager
-// @access  Private (Landlord only)
-exports.assignManager = async (req, res) => {
-  try {
-    const { managerId } = req.body;
-    
-    const property = await Property.findById(req.params.id);
-    
-    if (!property) {
-      return res.status(404).json({ message: 'Property not found' });
-    }
-    
-    // Check ownership
-    if (property.landlord.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-    
-    // Check if manager exists and has correct role
-    const manager = await User.findById(managerId);
-    if (!manager || manager.role !== 'manager') {
-      return res.status(400).json({ message: 'Invalid manager' });
-    }
-    
-    property.assignedManager = managerId;
-    await property.save();
-    
-    await property.populate('assignedManager', 'name email phone');
-    
-    res.json({
-      success: true,
-      property
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};

@@ -46,7 +46,7 @@ const leaseSchema = new mongoose.Schema({
     required: true
   },
   document: {
-    type: String // URL to uploaded lease document
+    type: String 
   },
   status: {
     type: String,
@@ -59,7 +59,7 @@ const leaseSchema = new mongoose.Schema({
         type: Boolean,
         default: false
       },
-      signatureData: String, // Base64 image data for canvas signature
+      signatureData: String, 
       signedAt: Date,
       ipAddress: String
     },
@@ -73,7 +73,7 @@ const leaseSchema = new mongoose.Schema({
       ipAddress: String
     }
   },
-  // DocuSign integration fields (for future use)
+  
   docusign: {
     envelopeId: String,
     status: String,

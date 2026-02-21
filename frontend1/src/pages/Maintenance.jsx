@@ -200,14 +200,6 @@ const Maintenance = () => {
                     </p>
                   </div>
 
-                  {req.assignedTo && (
-                    <div>
-                      <p className="text-gray-400">Assigned to:</p>
-                      <p className="text-white font-medium">
-                        {req.assignedTo?.name}
-                      </p>
-                    </div>
-                  )}
                 </div>
 
                 {/* IMAGE PREVIEW */}

@@ -85,10 +85,6 @@ const propertySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  assignedManager: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
   status: {
     type: String,
     enum: ['available', 'occupied', 'maintenance'],
@@ -108,11 +104,6 @@ propertySchema.virtual('rent').get(function() {
 // Virtual for tenant (alias for currentTenant)
 propertySchema.virtual('tenant').get(function() {
   return this.currentTenant;
-});
-
-// Virtual for manager (alias for assignedManager)
-propertySchema.virtual('manager').get(function() {
-  return this.assignedManager;
 });
 
 // Index for search functionality

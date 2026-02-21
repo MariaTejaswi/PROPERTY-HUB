@@ -4,8 +4,7 @@ export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/ap
 // User roles
 export const ROLES = {
   LANDLORD: 'landlord',
-  TENANT: 'tenant',
-  MANAGER: 'manager'
+  TENANT: 'tenant'
 };
 
 // Property types

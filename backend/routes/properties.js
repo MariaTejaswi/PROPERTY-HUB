@@ -10,8 +10,7 @@ const {
   updateProperty,
   deleteProperty,
   assignTenant,
-  removeTenant,
-  assignManager
+  removeTenant
 } = require('../controllers/propertyController');
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/roleCheck');
@@ -79,8 +78,5 @@ router.put('/:id/tenant', authorize('landlord'), assignTenant);
 
 // Remove tenant from property (landlord only)
 router.delete('/:id/tenant', authorize('landlord'), removeTenant);
-
-// Assign manager to property (landlord only)
-router.put('/:id/manager', authorize('landlord'), assignManager);
 
 module.exports = router;

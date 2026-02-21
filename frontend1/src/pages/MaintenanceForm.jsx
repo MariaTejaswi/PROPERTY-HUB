@@ -88,7 +88,7 @@ const MaintenanceForm = ({ isModal = false }) => {
         return;
       }
 
-      // Landlord/manager: backend already filters appropriately.
+      // Landlord: backend already filters appropriately.
       const response = await api.get('/properties');
       const props = extractProperties(response);
       setProperties(props);

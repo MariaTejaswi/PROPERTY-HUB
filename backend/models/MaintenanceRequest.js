@@ -16,10 +16,6 @@ const maintenanceRequestSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  assignedTo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User' // Can be manager or contractor
-  },
   title: {
     type: String,
     required: [true, 'Please add a title'],

@@ -18,7 +18,7 @@ const registerValidation = [
   body('name').notEmpty().trim().withMessage('Name is required'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('role').isIn(['landlord', 'tenant', 'manager']).withMessage('Invalid role')
+  body('role').isIn(['landlord', 'tenant']).withMessage('Invalid role')
 ];
 
 const loginValidation = [
@@ -34,6 +34,6 @@ router.post('/login', loginValidation, validateRequest, login);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 router.put('/password', protect, changePassword);
-router.get('/users', protect, authorize('landlord', 'manager'), getAllUsers);
+router.get('/users', protect, authorize('landlord'), getAllUsers);
 
 module.exports = router;

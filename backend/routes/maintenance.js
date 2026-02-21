@@ -10,7 +10,6 @@ const {
   updateMaintenanceRequest,
   deleteMaintenanceRequest,
   addComment,
-  assignRequest,
   getMaintenanceStats
 } = require('../controllers/maintenanceController');
 const { protect } = require('../middleware/auth');
@@ -66,8 +65,5 @@ router.post(
   validateRequest,
   addComment
 );
-
-// Assign maintenance request to manager (landlord only)
-router.put('/:id/assign', authorize('landlord'), assignRequest);
 
 module.exports = router;

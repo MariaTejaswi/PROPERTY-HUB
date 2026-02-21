@@ -1,6 +1,5 @@
 const MaintenanceRequest = require('../models/MaintenanceRequest');
 const Property = require('../models/Property');
-const User = require('../models/User');
 const { sendMaintenanceNotification } = require('../utils/emailService');
 
 // @desc    Get all maintenance requests
@@ -15,11 +14,6 @@ exports.getMaintenanceRequests = async (req, res) => {
       query.landlord = req.user._id;
     } else if (req.user.role === 'tenant') {
       query.tenant = req.user._id;
-    } else if (req.user.role === 'manager') {
-      query.$or = [
-        { assignedTo: req.user._id },
-        { landlord: req.user._id } // If manager also has landlord access
-      ];
     }
     
     // Additional filters
@@ -43,7 +37,6 @@ exports.getMaintenanceRequests = async (req, res) => {
       .populate('property', 'name address')
       .populate('tenant', 'name email phone')
       .populate('landlord', 'name email')
-      .populate('assignedTo', 'name email phone')
       .populate('comments.user', 'name')
       .sort({ createdAt: -1 });
     
@@ -66,7 +59,6 @@ exports.getMaintenanceRequest = async (req, res) => {
       .populate('property', 'name address')
       .populate('tenant', 'name email phone')
       .populate('landlord', 'name email phone')
-      .populate('assignedTo', 'name email phone')
       .populate('comments.user', 'name avatar');
     
     if (!request) {
@@ -76,8 +68,7 @@ exports.getMaintenanceRequest = async (req, res) => {
     // Check authorization
     const isAuthorized = 
       request.tenant._id.toString() === req.user._id.toString() ||
-      request.landlord._id.toString() === req.user._id.toString() ||
-      (request.assignedTo && request.assignedTo._id.toString() === req.user._id.toString());
+      request.landlord._id.toString() === req.user._id.toString();
     
     if (!isAuthorized) {
       return res.status(403).json({ message: 'Not authorized to view this request' });
@@ -153,15 +144,14 @@ exports.updateMaintenanceRequest = async (req, res) => {
     
     // Check authorization
     const isLandlord = request.landlord.toString() === req.user._id.toString();
-    const isAssignedManager = request.assignedTo && request.assignedTo.toString() === req.user._id.toString();
     const isTenant = request.tenant.toString() === req.user._id.toString();
     
-    if (!isLandlord && !isAssignedManager && !isTenant) {
+    if (!isLandlord && !isTenant) {
       return res.status(403).json({ message: 'Not authorized to update this request' });
     }
     
     // Tenants can only update description and add images
-    if (isTenant && !isLandlord && !isAssignedManager) {
+    if (isTenant && !isLandlord) {
       const allowedUpdates = ['description'];
       const updates = Object.keys(req.body);
       const isValidUpdate = updates.every(update => allowedUpdates.includes(update));
@@ -186,7 +176,7 @@ exports.updateMaintenanceRequest = async (req, res) => {
       req.params.id,
       req.body,
       { new: true, runValidators: true }
-    ).populate('property tenant landlord assignedTo', 'name email');
+    ).populate('property tenant landlord', 'name email');
     
     res.json(request);
   } catch (error) {
@@ -237,8 +227,7 @@ exports.addComment = async (req, res) => {
     // Check authorization
     const isAuthorized = 
       request.tenant.toString() === req.user._id.toString() ||
-      request.landlord.toString() === req.user._id.toString() ||
-      (request.assignedTo && request.assignedTo.toString() === req.user._id.toString());
+      request.landlord.toString() === req.user._id.toString();
     
     if (!isAuthorized) {
       return res.status(403).json({ message: 'Not authorized' });
@@ -247,45 +236,6 @@ exports.addComment = async (req, res) => {
     await request.addComment(req.user._id, text);
     
     await request.populate('comments.user', 'name avatar');
-    
-    res.json({
-      success: true,
-      request
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// @desc    Assign maintenance request to manager
-// @route   PUT /api/maintenance/:id/assign
-// @access  Private (Landlord only)
-exports.assignRequest = async (req, res) => {
-  try {
-    const { managerId } = req.body;
-    
-    const request = await MaintenanceRequest.findById(req.params.id);
-    
-    if (!request) {
-      return res.status(404).json({ message: 'Maintenance request not found' });
-    }
-    
-    // Check authorization (landlord only)
-    if (request.landlord.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-    
-    // Verify manager exists
-    const manager = await User.findById(managerId);
-    if (!manager || manager.role !== 'manager') {
-      return res.status(400).json({ message: 'Invalid manager' });
-    }
-    
-    request.assignedTo = managerId;
-    request.status = 'in_progress';
-    await request.save();
-    
-    await request.populate('assignedTo', 'name email phone');
     
     res.json({
       success: true,
@@ -307,8 +257,6 @@ exports.getMaintenanceStats = async (req, res) => {
       query.landlord = req.user._id;
     } else if (req.user.role === 'tenant') {
       query.tenant = req.user._id;
-    } else if (req.user.role === 'manager') {
-      query.assignedTo = req.user._id;
     }
     
     const stats = await MaintenanceRequest.aggregate([
