@@ -18,12 +18,52 @@ const createTransporter = () => {
   });
 };
 
+const sendWithResend = async (options) => {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return { success: false, message: 'RESEND_API_KEY not configured' };
+
+  const payload = {
+    from: process.env.EMAIL_FROM || 'PropertyHub <noreply@propertyhub.com>',
+    to: options.to,
+    subject: options.subject,
+    text: options.text,
+    html: options.html
+  };
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Resend error: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('Email sent via Resend:', data?.id);
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error('Error sending email via Resend:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 /**
  * Send email
  */
 const sendEmail = async (options) => {
+  if (process.env.RESEND_API_KEY) {
+    return await sendWithResend(options);
+  }
+
   const transporter = createTransporter();
-  
+
   if (!transporter) {
     console.log('Email sending skipped - SMTP not configured');
     console.log('Would have sent:', options.subject, 'to', options.to);
