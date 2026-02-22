@@ -196,6 +196,7 @@ const Dashboard = () => {
           <Card
             title="Recent Activity"
             className="bg-black border border-[#D4AF37] text-white shadow-xl"
+            headerClassName="bg-black"
           >
             <div className="space-y-4">
               {recentActivity.map((activity, index) => (
