@@ -32,7 +32,7 @@ const Navbar = () => {
 
   const navLinks = [
     { path: "/dashboard", label: "Dashboard", icon: HomeIcon, show: true },
-    { path: "/properties", label: "Properties", icon: BuildingOfficeIcon, show: isLandlord },
+    { path: "/properties", label: "Properties", icon: BuildingOfficeIcon, show: true },
     { path: "/payments", label: "Payments", icon: CurrencyDollarIcon, show: true },
     { path: "/maintenance", label: isLandlord ? "Maintenance" : "Requests", icon: WrenchScrewdriverIcon, show: true },
     { path: "/leases", label: isLandlord ? "Leases" : "Lease", icon: ClipboardDocumentCheckIcon, show: true },

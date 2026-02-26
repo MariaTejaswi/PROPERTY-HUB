@@ -7,6 +7,7 @@ import Alert from "../components/common/Alert";
 import DemoPaymentGateway from "../components/payments/DemoPaymentGateway";
 import AddPaymentModal from "../components/payments/AddPaymentModal";
 import { formatCurrency, formatDate } from "../utils/formatters";
+import { CreditCardIcon } from "@heroicons/react/24/outline";
 
 const Payments = () => {
   const { isLandlord, isTenant } = useAuth();
@@ -20,6 +21,8 @@ const Payments = () => {
   
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Auto-dismiss success message after 2 seconds
   useEffect(() => {
@@ -117,6 +120,15 @@ const Payments = () => {
               className="rounded-xl border border-[#D4AF37] px-5 py-3 font-semibold text-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.35)] transition hover:bg-[#D4AF37] hover:text-black"
             >
               + Add Payment
+            </button>
+          )}
+          {isTenant && (
+            <button
+              onClick={() => setSelectedPayment("makePayment")}
+              className="flex items-center gap-2 rounded-xl bg-[#D4AF37] px-5 py-3 font-semibold text-black shadow-[0_0_20px_rgba(212,175,55,0.35)] transition hover:bg-[#e5c56a]"
+            >
+              <CreditCardIcon className="h-5 w-5" />
+              Make Payment
             </button>
           )}
         </div>
@@ -234,21 +246,56 @@ const Payments = () => {
                   ⬇ Download Receipt
                 </button>
               )}
+
+              {/* PAY NOW BUTTON FOR TENANTS */}
+              {isTenant && p.status === "pending" && (
+                <button
+                  onClick={() => setSelectedPayment(p)}
+                  className="
+                    mt-6 w-full
+                    py-3 rounded-xl
+                    bg-[#D4AF37]
+                    text-black
+                    font-semibold
+                    tracking-wide
+                    hover:bg-[#e5c56a]
+                    shadow-[0_0_20px_rgba(212,175,55,0.35)]
+                    transition
+                  "
+                >
+                  💳 Pay Now
+                </button>
+              )}
             </div>
           ))}
         </div>
 
         {/* PAYMENT MODAL */}
-        {selectedPayment && (
+        {selectedPayment && selectedPayment !== "makePayment" && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
             <div className="lux-card max-w-lg w-full">
               <DemoPaymentGateway
                 paymentId={selectedPayment._id}
                 amount={selectedPayment.amount}
-                onSuccess={() => setSelectedPayment(null)}
+                onSuccess={(data) => {
+                  setSuccessMessage(`Payment of ${formatCurrency(selectedPayment.amount)} successful!`);
+                  setShowSuccessPopup(true);
+                  setSelectedPayment(null);
+                  setLoading(true);
+                  fetchPayments();
+                }}
               />
             </div>
           </div>
+        )}
+
+        {/* TENANT MAKE PAYMENT MODAL */}
+        {selectedPayment === "makePayment" && isTenant && (
+          <TenantPaymentSelector
+            payments={payments.filter(p => p.status === "pending")}
+            onSelectPayment={(payment) => setSelectedPayment(payment)}
+            onClose={() => setSelectedPayment(null)}
+          />
         )}
 
         {/* ADD PAYMENT MODAL */}
@@ -263,6 +310,84 @@ const Payments = () => {
             }}
           />
         )}
+
+        {/* SUCCESS POPUP */}
+        {showSuccessPopup && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+            <div className="bg-black border-2 border-[#D4AF37] rounded-2xl p-8 max-w-md w-full shadow-[0_0_50px_rgba(212,175,55,0.5)] animate-scale-in">
+              <div className="text-center">
+                <div className="mb-4 flex justify-center">
+                  <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center">
+                    <svg className="w-12 h-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">Payment Successful!</h2>
+                <p className="text-[#D4AF37] text-lg font-semibold mb-4">{successMessage}</p>
+                <p className="text-gray-400 text-sm mb-6">Your receipt has been generated and can be downloaded below.</p>
+                <button
+                  onClick={() => setShowSuccessPopup(false)}
+                  className="w-full py-3 bg-[#D4AF37] hover:bg-[#e5c56a] text-black font-semibold rounded-lg transition"
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const TenantPaymentSelector = ({ payments, onSelectPayment, onClose }) => {
+  if (payments.length === 0) {
+    return (
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="bg-black border border-[#D4AF37]/30 rounded-2xl p-8 w-full max-w-lg shadow-[0_0_30px_rgba(212,175,55,0.2)]">
+          <h2 className="text-2xl font-bold text-white mb-4">No Pending Payments</h2>
+          <p className="text-gray-400 mb-6">You have no pending payments to make right now.</p>
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2.5 bg-[#D4AF37] hover:bg-[#e5c56a] text-black font-semibold rounded-lg transition"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      <div className="bg-black border border-[#D4AF37]/30 rounded-2xl p-8 w-full max-w-lg shadow-[0_0_30px_rgba(212,175,55,0.2)]">
+        <h2 className="text-2xl font-bold text-white mb-6">Select Payment to Make</h2>
+        
+        <div className="space-y-3 max-h-64 overflow-y-auto mb-6">
+          {payments.map((payment) => (
+            <button
+              key={payment._id}
+              onClick={() => onSelectPayment(payment)}
+              className="w-full p-4 border border-white/20 rounded-lg hover:border-[#D4AF37] hover:bg-white/5 transition text-left"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-white font-semibold">{payment.property?.name}</p>
+                  <p className="text-sm text-gray-400">Due: {formatDate(payment.dueDate)}</p>
+                </div>
+                <p className="text-[#D4AF37] font-bold">{formatCurrency(payment.amount)}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );

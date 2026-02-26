@@ -4,20 +4,25 @@ import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 import Loader from "../components/common/Loader";
 import Alert from "../components/common/Alert";
+import DemoPaymentGateway from "../components/payments/DemoPaymentGateway";
 import { formatCurrency } from "../utils/formatters";
 import {
   PlusIcon,
   MapPinIcon,
   HomeIcon,
+  CreditCardIcon,
 } from "@heroicons/react/24/outline";
 
 const Properties = () => {
-  const { isLandlord } = useAuth();
+  const { isLandlord, isTenant, user } = useAuth();
   const navigate = useNavigate();
 
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     fetchProperties();
@@ -42,6 +47,34 @@ const Properties = () => {
       setProperties((prev) => prev.filter((p) => p._id !== id));
     } catch {
       setError("Failed to delete property");
+    }
+  };
+
+  const handleMakePayment = async (propertyId) => {
+    try {
+      // Fetch pending payment for this specific property
+      const response = await api.get("/payments", { 
+        params: { 
+          status: "pending",
+          propertyId: propertyId 
+        } 
+      });
+      const payments = response.data.payments || [];
+      
+      if (payments.length === 0) {
+        setError("No payment found. Please ask your landlord to create a payment for this property.");
+        // Optionally, navigate to payments page where they can see all their payments
+        setTimeout(() => {
+          navigate("/payments");
+        }, 2000);
+        return;
+      }
+      
+      // Use the first (and should be only) pending payment for this property
+      setSelectedPayment(payments[0]);
+    } catch (err) {
+      setError("Failed to load payment details");
+      console.error(err);
     }
   };
 
@@ -172,7 +205,7 @@ const Properties = () => {
                     </div>
                   )}
 
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 flex-wrap">
                     <button
                       onClick={() => navigate(`/properties/${property._id}`)}
                       className="flex-1 py-2 bg-white/10 text-white 
@@ -180,6 +213,17 @@ const Properties = () => {
                     >
                       View
                     </button>
+
+                    {isTenant && property.status === "occupied" && property.currentTenant?._id === user?.id && (
+                      <button
+                        onClick={() => handleMakePayment(property._id)}
+                        className="flex-1 py-2 bg-[#D4AF37] text-black font-semibold
+                                   rounded-lg hover:bg-[#e5c56a] transition flex items-center justify-center gap-2"
+                      >
+                        <CreditCardIcon className="h-4 w-4" />
+                        Make Payment
+                      </button>
+                    )}
 
                     {isLandlord && (
                       <>
@@ -212,6 +256,50 @@ const Properties = () => {
           </div>
         )}
       </div>
+
+      {/* PAYMENT MODAL */}
+      {selectedPayment && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="lux-card max-w-lg w-full">
+            <DemoPaymentGateway
+              paymentId={selectedPayment._id}
+              amount={selectedPayment.amount}
+              onSuccess={(data) => {
+                setSelectedPayment(null);
+                setSuccessMessage(`Payment of ${formatCurrency(selectedPayment.amount)} successful!`);
+                setShowSuccessPopup(true);
+                fetchProperties();
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESS POPUP */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-black border-2 border-[#D4AF37] rounded-2xl p-8 max-w-md w-full shadow-[0_0_50px_rgba(212,175,55,0.5)] animate-scale-in">
+            <div className="text-center">
+              <div className="mb-4 flex justify-center">
+                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center">
+                  <svg className="w-12 h-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Payment Successful!</h2>
+              <p className="text-[#D4AF37] text-lg font-semibold mb-4">{successMessage}</p>
+              <p className="text-gray-400 text-sm mb-6">Your receipt has been generated and can be downloaded from the Payments page.</p>
+              <button
+                onClick={() => setShowSuccessPopup(false)}
+                className="w-full py-3 bg-[#D4AF37] hover:bg-[#e5c56a] text-black font-semibold rounded-lg transition"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

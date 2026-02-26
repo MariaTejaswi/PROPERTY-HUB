@@ -93,8 +93,8 @@ function AppRoutes() {
         </Routes>
       </main>
 
-      {/* Footer only for logged-in users */}
-      {user && <Footer />}
+      {/* Footer only for logged-in users, but not on messages page */}
+      {user && location.pathname !== "/messages" && <Footer />}
     </div>
   );
 }

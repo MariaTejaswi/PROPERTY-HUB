@@ -1,5 +1,6 @@
 const Property = require('../models/Property');
 const User = require('../models/User');
+const Payment = require('../models/Payment');
 
 // @desc    Get all properties
 // @route   GET /api/properties
@@ -14,7 +15,11 @@ exports.getProperties = async (req, res) => {
     if (req.user.role === 'landlord') {
       query.landlord = req.user._id;
     } else if (req.user.role === 'tenant') {
-      query.currentTenant = req.user._id;
+      // Show available properties OR properties where they are the current tenant
+      query.$or = [
+        { status: 'available' },
+        { currentTenant: req.user._id }
+      ];
     } else if (req.user.role === 'manager') {
       query.assignedManager = req.user._id;
     }
@@ -72,10 +77,11 @@ exports.getProperty = async (req, res) => {
       return res.status(404).json({ message: 'Property not found' });
     }
     
-    // Check authorization - allow landlord, assigned tenant, and assigned manager
+    // Check authorization - allow landlord, assigned tenant, assigned manager, and any tenant viewing available properties
     const isAuthorized = 
       req.user.role === 'landlord' && property.landlord._id.toString() === req.user._id.toString() ||
       req.user.role === 'tenant' && property.currentTenant && property.currentTenant._id.toString() === req.user._id.toString() ||
+      req.user.role === 'tenant' && property.status === 'available' ||
       req.user.role === 'manager' && property.assignedManager && property.assignedManager._id.toString() === req.user._id.toString();
     
     if (!isAuthorized) {
@@ -308,6 +314,26 @@ exports.assignTenant = async (req, res) => {
     property.isAvailable = false;
     
     await property.save();
+    
+    // Create a pending payment for the tenant
+    const dueDate = new Date();
+    dueDate.setMonth(dueDate.getMonth() + 1); // Due in one month
+    
+    try {
+      await Payment.create({
+        property: property._id,
+        tenant: tenantId,
+        landlord: req.user._id,
+        amount: property.rentAmount,
+        type: 'rent',
+        description: `Monthly rent for ${property.name}`,
+        dueDate,
+        status: 'pending'
+      });
+    } catch (paymentError) {
+      console.error('Error creating payment:', paymentError);
+      // Don't fail the assignment if payment creation fails
+    }
     
     await property.populate('currentTenant', 'name email phone');
     

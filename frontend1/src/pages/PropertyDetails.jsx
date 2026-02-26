@@ -4,17 +4,21 @@ import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 import Loader from "../components/common/Loader";
 import Alert from "../components/common/Alert";
+import MessageLandlordModal from "../components/common/MessageLandlordModal";
+import AssignTenantModal from "../components/common/AssignTenantModal";
 import { formatCurrency } from "../utils/formatters";
-import { HomeIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, EnvelopeIcon, UserPlusIcon } from "@heroicons/react/24/outline";
 
 const PropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isLandlord } = useAuth();
+  const { user, isLandlord, isTenant } = useAuth();
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
 
   useEffect(() => {
     fetchProperty();
@@ -38,6 +42,17 @@ const PropertyDetails = () => {
       navigate("/properties");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete property");
+    }
+  };
+
+  const handleRemoveTenant = async () => {
+    if (!window.confirm("Are you sure you want to remove the current tenant?")) return;
+    try {
+      await api.delete(`/properties/${id}/tenant`);
+      setError("");
+      await fetchProperty(); // Refresh property data
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to remove tenant");
     }
   };
 
@@ -68,8 +83,6 @@ const PropertyDetails = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black py-10 px-6">
       <div className="max-w-7xl mx-auto">
-
-        {/* HEADER */}
         <div className="flex justify-between items-center mb-10">
           <button
             onClick={() => navigate("/properties")}
@@ -194,6 +207,14 @@ const PropertyDetails = () => {
                 <Field label="Name" value={(property.tenant || property.currentTenant).name} />
                 <Field label="Email" value={(property.tenant || property.currentTenant).email} />
                 <Field label="Phone" value={(property.tenant || property.currentTenant).phone || "N/A"} />
+                {isLandlord && (
+                  <button
+                    onClick={handleRemoveTenant}
+                    className="w-full mt-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition"
+                  >
+                    Remove Tenant
+                  </button>
+                )}
               </GlassCard>
             )}
 
@@ -201,10 +222,48 @@ const PropertyDetails = () => {
               <ActionButton label="View Payments" onClick={() => navigate("/payments")} />
               <ActionButton label="Maintenance Requests" onClick={() => navigate("/maintenance")} />
               <ActionButton label="View Lease" onClick={() => navigate("/leases")} />
+              {isLandlord && (
+                <ActionButton
+                  label="Assign Tenant"
+                  onClick={() => setShowAssignModal(true)}
+                  variant="primary"
+                  icon={<UserPlusIcon className="h-4 w-4" />}
+                />
+              )}
+              {isTenant && property?.status === "available" && (
+                <ActionButton
+                  label="Message Landlord"
+                  onClick={() => setShowMessageModal(true)}
+                  variant="primary"
+                  icon={<EnvelopeIcon className="h-4 w-4" />}
+                />
+              )}
             </GlassCard>
           </div>
         </div>
       </div>
+
+      {/* MESSAGE LANDLORD MODAL */}
+      {showMessageModal && property?.landlord && (
+        <MessageLandlordModal
+          property={property}
+          landlord={property.landlord}
+          onClose={() => setShowMessageModal(false)}
+          onSuccess={() => setShowMessageModal(false)}
+        />
+      )}
+
+      {/* ASSIGN TENANT MODAL */}
+      {showAssignModal && (
+        <AssignTenantModal
+          property={property}
+          onClose={() => setShowAssignModal(false)}
+          onSuccess={() => {
+            fetchProperty();
+            setShowAssignModal(false);
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -234,12 +293,16 @@ const Field = ({ label, value }) => (
   </p>
 );
 
-const ActionButton = ({ label, onClick }) => (
+const ActionButton = ({ label, onClick, variant = "default", icon }) => (
   <button
     onClick={onClick}
-    className="w-full py-2.5 bg-white/10 hover:bg-white/20 
-               rounded-lg text-white transition"
+    className={`w-full py-2.5 rounded-lg transition flex items-center justify-center gap-2 ${
+      variant === "primary"
+        ? "bg-[#D4AF37] hover:bg-[#e5c56a] text-black font-semibold"
+        : "bg-white/10 hover:bg-white/20 text-white"
+    }`}
   >
+    {icon && <span>{icon}</span>}
     {label}
   </button>
 );
