@@ -10,7 +10,7 @@ const Loader = ({ fullScreen = false, size = 'md', text = '' }) => {
   const spinner = (
     <div className="flex flex-col items-center gap-3">
       <svg 
-        className={`animate-spin ${sizeClasses[size]} text-primary-600`}
+        className={`animate-spin ${sizeClasses[size]} text-[#D4AF37]`}
         xmlns="http://www.w3.org/2000/svg" 
         fill="none" 
         viewBox="0 0 24 24"
@@ -35,7 +35,7 @@ const Loader = ({ fullScreen = false, size = 'md', text = '' }) => {
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
         {spinner}
       </div>
     );
