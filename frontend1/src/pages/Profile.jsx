@@ -87,7 +87,15 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+    <div
+      className="min-h-screen bg-black bg-cover bg-center flex items-center justify-center px-4"
+      style={{
+        backgroundImage: "url('/bg.png')",
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
 
       <div className="max-w-5xl w-full">
 
