@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 import {
@@ -90,7 +91,7 @@ const Profile = () => {
     <div
       className="min-h-screen bg-black bg-cover bg-center flex items-center justify-center px-4"
       style={{
-        backgroundImage: "url('/bg.png')",
+        backgroundImage: `url('/bg.png')`, 
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover',
         backgroundPosition: 'center',

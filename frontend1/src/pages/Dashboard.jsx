@@ -6,6 +6,7 @@ import Card from "../components/common/Card";
 import Loader from "../components/common/Loader";
 import { formatCurrency } from "../utils/formatters";
 
+
 import {
   BuildingOfficeIcon,
   CurrencyDollarIcon,
@@ -111,7 +112,7 @@ const Dashboard = () => {
   if (loading) return <Loader fullScreen />;
 
   return (
-    <div className="min-h-screen bg-[#0E0E0E] py-12 px-4 sm:px-8 text-white">
+    <div className="min-h-screen overflow-x-hidden bg-black py-12 px-4 sm:px-8 text-white">
       <div className="max-w-7xl mx-auto space-y-12">
 
         {/* HEADER */}

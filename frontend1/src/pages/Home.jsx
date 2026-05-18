@@ -13,7 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 // Optimized background image
-const bg2 = new URL("../assets/bg-hero.webp", import.meta.url).href;
+const bg2 = new URL("../assets/bg.png", import.meta.url).href;
 
 const Home = () => {
   const features = [
